@@ -1,9 +1,9 @@
 module Main exposing (..)
 
-import Checkbox exposing (..)
+import Checkbox exposing (focusCreate)
 import Dom exposing (..)
-import Html exposing (..)
-import Html.Attributes as HA exposing (..)
+import Html exposing (Html)
+import Page exposing (content)
 import Requests exposing (..)
 import Types exposing (..)
 
@@ -63,16 +63,16 @@ update msg model =
         CreateCheckbox ->
             let
                 checkbox =
-                    Checkbox model.create False (List.length model.checks + 1)
+                    Checkbox model.create False 0
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
                 ! [ createCheckboxRequest model.create, focusCreate ]
 
         CreateCheckboxDatabase (Ok checkbox) ->
-            { model | error = "Successfully added checkbox to the cloud" } ! []
+            { model | error = "Successfully added checkbox to the cloud " } ! []
 
         CreateCheckboxDatabase (Err _) ->
-            { model | error = "Failed to add the checkbox to the cloud" } ! []
+            { model | error = "Failed to add the checkbox to the cloud " } ! []
 
         FocusCreate result ->
             case result of
@@ -88,8 +88,4 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        (List.map checkbox (List.sortBy .description model.checks)
-            ++ [ createCheckbox model.create ]
-            ++ [ div [ HA.class "red" ] [ text model.error ] ]
-        )
+    content model
