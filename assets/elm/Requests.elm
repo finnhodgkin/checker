@@ -18,13 +18,36 @@ fetchInitialData =
     Http.send GetAll (Http.get url listCheckboxesDecoder)
 
 
-createCheckboxRequest : String -> Cmd Msg
-createCheckboxRequest description =
+createCheckboxRequest : Int -> String -> Cmd Msg
+createCheckboxRequest id description =
     let
         url =
             "/checkboxes"
     in
-    Http.send CreateCheckboxDatabase (Http.post url (Http.jsonBody <| encodeCheckbox description) (Decode.at [ "data" ] checkboxDecoder))
+    Http.send (CreateCheckboxDatabase id) (Http.post url (Http.jsonBody <| encodeCheckbox description) (Decode.at [ "data" ] checkboxDecoder))
+
+
+deleteCheckboxRequest : Int -> Cmd Msg
+deleteCheckboxRequest id =
+    let
+        url =
+            "/checkboxes/" ++ toString id
+
+        expectedCheckbox =
+            Http.expectJson (Decode.at [ "data" ] checkboxDecoder)
+
+        request =
+            Http.request
+                { method = "DELETE"
+                , headers = []
+                , url = url
+                , body = Http.emptyBody
+                , expect = Http.expectStringResponse (\response -> Ok "")
+                , timeout = Nothing
+                , withCredentials = False
+                }
+    in
+    Http.send (DeleteCheckboxDatabase id) request
 
 
 checkToggle : Int -> Bool -> Cmd Msg

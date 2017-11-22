@@ -11,7 +11,7 @@ import Types exposing (..)
 checkboxes : Model -> Html Msg
 checkboxes model =
     div [ class "checkboxes" ]
-        [ div [] (List.map checkbox (List.sortBy .description model.checks))
+        [ div [] (List.map checkbox (List.sortBy .id model.checks))
         , createCheckbox model.create
         , checkboxError model.error
         ]
@@ -20,23 +20,26 @@ checkboxes model =
 checkIcon : Bool -> Html Msg
 checkIcon checked =
     if checked then
-        div [ class "checkbox-checker__icon" ] []
+        Html.i [ class "material-icons" ] [ text "check_box" ]
     else
-        div [ class "checkbox-checker__icon--off" ] []
+        Html.i [ class "material-icons" ] [ text "check_box_outline_blank" ]
 
 
 checkbox : Checkbox -> Html Msg
 checkbox checkbox =
-    label [ class "checkbox-checker" ]
-        [ checkIcon checkbox.checked
-        , span [ class "checkbox-checker__label" ] [ text checkbox.description ]
-        , input
-            [ type_ "checkbox"
-            , checked checkbox.checked
-            , onClick (Check checkbox.id)
-            , class "visually-hidden"
+    div []
+        [ label [ class "checkbox-checker" ]
+            [ checkIcon checkbox.checked
+            , input
+                [ type_ "checkbox"
+                , checked checkbox.checked
+                , onClick (Check checkbox.id)
+                , class "visually-hidden"
+                ]
+                []
+            , input [ class "checkbox-checker__label", type_ "text", value checkbox.description, onInput (UpdateCheckbox checkbox.id) ] []
+            , button [ onClick (DeleteCheckbox checkbox.id checkbox.description) ] [ text "Delete" ]
             ]
-            []
         ]
 
 
@@ -49,8 +52,9 @@ createCheckbox create =
                 , onInput UpdateCreate
                 , id "create"
                 , class "checkbox-create__input"
+                , value create
                 ]
-                [ text create ]
+                []
             , text "Add a checkbox"
             ]
         ]
