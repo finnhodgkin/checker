@@ -33,6 +33,14 @@ savedClass saved =
         "unsaved"
 
 
+updateOnSubmit : Checkbox -> List (Attribute Msg)
+updateOnSubmit checkbox =
+    if checkbox.description == "" then
+        [ onSubmit (DeleteCheckbox checkbox.id checkbox.description) ]
+    else
+        [ onSubmit (SaveCheckbox checkbox.id) ]
+
+
 checkbox : Checkbox -> Html Msg
 checkbox checkbox =
     div [ class (savedClass checkbox.saved) ]
@@ -45,7 +53,16 @@ checkbox checkbox =
                 , class "visually-hidden"
                 ]
                 []
-            , input [ class "checkbox-checker__label", type_ "text", value checkbox.description, onInput (UpdateCheckbox checkbox.id) ] []
+            , Html.form (updateOnSubmit checkbox)
+                [ input
+                    [ class "checkbox-checker__label"
+                    , type_ "text"
+                    , value checkbox.description
+                    , onInput (UpdateCheckbox checkbox.id)
+                    , autocomplete False
+                    ]
+                    []
+                ]
             , button [ onClick (DeleteCheckbox checkbox.id checkbox.description) ] [ text "Delete" ]
             ]
         ]
@@ -53,7 +70,14 @@ checkbox checkbox =
 
 createCheckbox : String -> Html Msg
 createCheckbox create =
-    Html.form [ onSubmit CreateCheckbox, class "checkbox-create" ]
+    let
+        submit =
+            if create == "" then
+                onSubmit NoOp
+            else
+                onSubmit CreateCheckbox
+    in
+    Html.form [ submit, class "checkbox-create" ]
         [ label [ class "checkbox-create__label" ]
             [ input
                 [ type_ "text"
@@ -61,6 +85,7 @@ createCheckbox create =
                 , id "create"
                 , class "checkbox-create__input"
                 , value create
+                , autocomplete False
                 ]
                 []
             , text "Add a checkbox"

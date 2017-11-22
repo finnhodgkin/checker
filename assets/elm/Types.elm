@@ -26,6 +26,8 @@ type Msg
     | DeleteCheckbox Int String
     | DeleteCheckboxDatabase Int (Result Http.Error String)
     | UpdateCheckbox Int String
+    | SaveCheckbox Int
+    | UpdateCheckboxDatabase (Result Http.Error Checkbox)
     | UpdateCreate String
     | CreateCheckbox
     | CreateCheckboxDatabase Int (Result Http.Error Checkbox)

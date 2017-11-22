@@ -35,9 +35,14 @@ toggleChecked id checkboxes =
     List.map toggle checkboxes
 
 
+findCheckbox : Int -> List Checkbox -> Maybe Checkbox
+findCheckbox id checkboxes =
+    List.head (List.filter (\checkbox -> checkbox.id == id) checkboxes)
+
+
 isChecked : Int -> List Checkbox -> Bool
 isChecked id checkboxes =
-    case List.head (List.filter (\checkbox -> checkbox.id == id) checkboxes) of
+    case findCheckbox id checkboxes of
         Just checkbox ->
             not checkbox.checked
 
@@ -50,7 +55,7 @@ editCheckbox id newDescription checkboxes =
     let
         edit cb =
             if cb.id == id then
-                { cb | description = newDescription }
+                { cb | description = newDescription, saved = False }
             else
                 cb
     in
@@ -81,6 +86,11 @@ save id checkboxes saved =
     List.map save checkboxes
 
 
+noOpArg : Checkbox -> Int -> Cmd Msg
+noOpArg checkbox int =
+    Cmd.none
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -102,6 +112,24 @@ update msg model =
 
         UpdateCheckbox id string ->
             { model | checks = editCheckbox id string model.checks } ! []
+
+        SaveCheckbox id ->
+            let
+                save =
+                    case findCheckbox id model.checks of
+                        Just checkbox ->
+                            updateCheckbox checkbox
+
+                        Nothing ->
+                            noOpArg (Checkbox "" False 1 False)
+            in
+            model ! [ save id ]
+
+        UpdateCheckboxDatabase (Ok checkbox) ->
+            { model | checks = save checkbox.id model.checks True } ! []
+
+        UpdateCheckboxDatabase (Err _) ->
+            { model | error = "Failed to change the checkbox in the cloud" } ! []
 
         DeleteCheckbox id description ->
             { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]

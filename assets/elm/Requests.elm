@@ -50,6 +50,32 @@ deleteCheckboxRequest id =
     Http.send (DeleteCheckboxDatabase id) request
 
 
+updateCheckbox : Checkbox -> Int -> Cmd Msg
+updateCheckbox checkbox id =
+    let
+        url =
+            "/checkboxes/" ++ toString checkbox.id
+
+        body =
+            Http.jsonBody <| encodeUpdate checkbox.description
+
+        expectedCheckbox =
+            Http.expectJson (Decode.at [ "data" ] checkboxDecoder)
+
+        request =
+            Http.request
+                { method = "PUT"
+                , headers = []
+                , url = url
+                , body = body
+                , expect = expectedCheckbox
+                , timeout = Nothing
+                , withCredentials = False
+                }
+    in
+    Http.send UpdateCheckboxDatabase request
+
+
 checkToggle : Int -> Bool -> Cmd Msg
 checkToggle id checked =
     let
@@ -78,6 +104,18 @@ checkToggle id checked =
 
 
 -- ENCODERS
+
+
+encodeUpdate : String -> Value
+encodeUpdate description =
+    let
+        checkbox =
+            JE.object
+                [ ( "description", JE.string description ) ]
+    in
+    JE.object
+        [ ( "checkbox", checkbox )
+        ]
 
 
 encodeToggle : Int -> Bool -> Value
