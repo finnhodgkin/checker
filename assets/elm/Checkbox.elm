@@ -25,9 +25,17 @@ checkIcon checked =
         Html.i [ class "material-icons" ] [ text "check_box_outline_blank" ]
 
 
+savedClass : Bool -> String
+savedClass saved =
+    if saved then
+        "saved"
+    else
+        "unsaved"
+
+
 checkbox : Checkbox -> Html Msg
 checkbox checkbox =
-    div []
+    div [ class (savedClass checkbox.saved) ]
         [ label [ class "checkbox-checker" ]
             [ checkIcon checkbox.checked
             , input

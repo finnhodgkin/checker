@@ -14,6 +14,7 @@ defmodule CheckerWeb.CheckboxView do
     %{id: checkbox.id,
       description: checkbox.description,
       checked: checkbox.checked,
-      id: checkbox.id}
+      id: checkbox.id,
+      saved: true}
   end
 end

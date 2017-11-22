@@ -20,9 +20,10 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    Model [] "" "" [] ! [ fetchInitialData ]
+    Model [] "" "" ! [ fetchInitialData ]
 
 
+toggleChecked : Int -> List Checkbox -> List Checkbox
 toggleChecked id checkboxes =
     let
         toggle cb =
@@ -34,6 +35,7 @@ toggleChecked id checkboxes =
     List.map toggle checkboxes
 
 
+isChecked : Int -> List Checkbox -> Bool
 isChecked id checkboxes =
     case List.head (List.filter (\checkbox -> checkbox.id == id) checkboxes) of
         Just checkbox ->
@@ -43,6 +45,7 @@ isChecked id checkboxes =
             False
 
 
+editCheckbox : Int -> String -> List Checkbox -> List Checkbox
 editCheckbox id newDescription checkboxes =
     let
         edit cb =
@@ -54,47 +57,45 @@ editCheckbox id newDescription checkboxes =
     List.map edit checkboxes
 
 
+updateCheckboxId : Int -> String -> Int -> List Checkbox -> List Checkbox
 updateCheckboxId id description newId checkboxes =
     let
         edit cb =
             if cb.id == id && cb.description == description then
-                { cb | id = newId }
+                { cb | id = newId, saved = True }
             else
                 cb
     in
     List.map edit checkboxes
 
 
-unsave id savedCheckbox =
+save : Int -> List Checkbox -> Bool -> List Checkbox
+save id checkboxes saved =
     let
-        unSave saved =
-            if saved.id == id then
-                { saved | saved = False }
+        save unSaved =
+            if unSaved.id == id then
+                { unSaved | saved = saved }
             else
-                saved
+                unSaved
     in
-    List.map unSave savedCheckbox
-
-
-buildSaved checkboxes =
-    List.map (\checkbox -> { id = checkbox.id, saved = True }) checkboxes
+    List.map save checkboxes
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Check toggleId ->
-            { model | checks = toggleChecked toggleId model.checks, saved = unsave toggleId model.saved }
+            { model | checks = toggleChecked toggleId model.checks }
                 ! [ checkToggle toggleId (isChecked toggleId model.checks) ]
 
-        CheckDatabase (Ok checkboxes) ->
-            model ! []
+        CheckDatabase (Ok checkbox) ->
+            { model | checks = save checkbox.id model.checks True } ! []
 
         CheckDatabase (Err _) ->
-            { model | error = "The checkbox in the cloud failed to update" } ! []
+            { model | error = "Failed to update in the cloud" } ! []
 
         GetAll (Ok checkboxes) ->
-            { model | checks = checkboxes, saved = buildSaved checkboxes, error = "" } ! []
+            { model | checks = checkboxes, error = "" } ! []
 
         GetAll (Err _) ->
             { model | error = "Failed to grab saved checkboxes" } ! []
@@ -103,14 +104,14 @@ update msg model =
             { model | checks = editCheckbox id string model.checks } ! []
 
         DeleteCheckbox id description ->
-            let
-                delete check =
-                    not (check.id == id && check.description == description)
-            in
-            { model | checks = List.filter delete model.checks } ! [ deleteCheckboxRequest id ]
+            { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]
 
         DeleteCheckboxDatabase id (Ok checkbox) ->
-            { model | error = "Trimmed from the cloud" } ! []
+            let
+                delete check =
+                    not (check.id == id)
+            in
+            { model | checks = List.filter delete model.checks, error = "Trimmed from the cloud" } ! []
 
         DeleteCheckboxDatabase id (Err _) ->
             { model | error = "Failed to remove checkbox from the cloud" } ! []
@@ -124,9 +125,9 @@ update msg model =
                     List.length model.checks
 
                 checkbox =
-                    Checkbox model.create False id
+                    Checkbox model.create False id False
             in
-            { model | checks = model.checks ++ [ checkbox ], saved = model.saved ++ [ Saved id False ], create = "" }
+            { model | checks = model.checks ++ [ checkbox ], create = "" }
                 ! [ createCheckboxRequest id model.create, focusCreate ]
 
         CreateCheckboxDatabase id (Ok checkbox) ->

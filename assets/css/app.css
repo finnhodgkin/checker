@@ -8,3 +8,10 @@
   padding: 0;
   border: 0;
 }
+
+.saved {
+}
+
+.unsaved {
+  opacity: 0.3;
+}

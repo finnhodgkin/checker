@@ -8,13 +8,6 @@ type alias Model =
     { checks : List Checkbox
     , error : String
     , create : String
-    , saved : List Saved
-    }
-
-
-type alias Saved =
-    { id : Int
-    , saved : Bool
     }
 
 
@@ -22,6 +15,7 @@ type alias Checkbox =
     { description : String
     , checked : Bool
     , id : Int
+    , saved : Bool
     }
 
 
