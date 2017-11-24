@@ -8,9 +8,10 @@
     <meta name="author" content="">
 
     <title>Hello Checker!</title>
-    <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
 
   <body>

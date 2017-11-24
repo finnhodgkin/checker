@@ -140,7 +140,7 @@ update msg model =
         UpdateCheckbox id string ->
             { model | checks = editCheckbox id string model.checks } ! []
 
-        SaveCheckbox id ->
+        SaveCheckbox id string ->
             let
                 save =
                     case findCheckbox id model.checks of
@@ -150,7 +150,7 @@ update msg model =
                         Nothing ->
                             noOpArg
             in
-            model ! [ save id ]
+            { model | checks = setEditCheckbox id string False model.checks } ! [ save id ]
 
         DeleteCheckbox id description ->
             { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]
@@ -171,7 +171,7 @@ update msg model =
         CreateCheckbox ->
             let
                 id =
-                    List.length model.checks
+                    List.length model.checks * -1
 
                 checkbox =
                     Checkbox model.create False id False False

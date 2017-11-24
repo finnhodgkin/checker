@@ -1,3 +1,8 @@
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: papayawhip;
+}
+
 .visually-hidden {
   position: absolute;
   overflow: hidden;
@@ -9,13 +14,79 @@
   border: 0;
 }
 
-.saved {
-}
-
-.unsaved {
-  opacity: 0.3;
-}
-
 .pointer {
   cursor: pointer;
+}
+
+.button--rounded {
+  border-radius: 50%;
+  font-size: 1.5rem;
+  padding: 0.65rem;
+  background-color: palevioletred;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+}
+
+.button--grey {
+  background-color: rgb(184, 184, 184);
+}
+
+.button--empty {
+  background-color: rgb(184, 184, 184);
+  color: rgb(184, 184, 184);
+}
+
+.button--right-pad {
+  margin-right: 1rem;
+}
+
+.button--pad {
+  margin-right: 0.5rem;
+  margin-left: 1rem;
+}
+
+.checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid palevioletred;
+  box-sizing: border-box;
+}
+
+.checkbox:last-child {
+  border-bottom: none;
+}
+
+.checkbox--text {
+  flex-grow: 1;
+  box-sizing: border-box;
+  font-size: 1rem;
+  color: palevioletred;
+  -ms-word-break: break-all;
+  word-break: break-all;
+  word-break: break-word;
+}
+
+.checkbox--form {
+  flex-grow: 1;
+}
+
+.checkbox--input {
+  width: 100%;
+  padding: 0.75rem 0.5rem;
+}
+
+.checkbox input[type='text'] {
+  background: transparent;
+  border: 1px solid palevioletred;
+}
+
+.mobile-container {
+  max-width: 40rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
