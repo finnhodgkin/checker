@@ -1,7 +1,7 @@
 module Requests exposing (..)
 
 import Http
-import Json.Decode as Decode exposing (Decoder, bool, field, int, string)
+import Json.Decode as Decode exposing (Decoder, bool, dict, field, int, string)
 import Json.Encode as JE exposing (Value, bool, int)
 import Types exposing (..)
 
@@ -106,10 +106,10 @@ updateChecklist : Checklist -> Cmd Msg
 updateChecklist list =
     let
         url =
-            "/checklist/" ++ toString list.id
+            "/checklists/" ++ toString list.id
 
         body =
-            Http.jsonBody <| encodeList list.title
+            Http.jsonBody <| encodeList list.editString
 
         expectedChecklist =
             Http.expectJson (Decode.at [ "data" ] listDecoder)
@@ -203,9 +203,9 @@ checkboxDecoder =
 
 listDecoder : Decoder Checklist
 listDecoder =
-    Decode.at [ "data" ] <|
-        Decode.map4 Checklist
-            (field "title" Decode.string)
-            (field "id" Decode.int)
-            (field "editing" Decode.bool)
-            (field "editString" Decode.string)
+    Decode.map4
+        Checklist
+        (field "title" Decode.string)
+        (field "id" Decode.int)
+        (field "editing" Decode.bool)
+        (field "editString" Decode.string)

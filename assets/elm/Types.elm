@@ -47,5 +47,6 @@ type Msg
     | EditChecklist
     | UpdateChecklist String
     | SetChecklist
+    | ResetChecklist
     | UpdateChecklistDatabase (Result Http.Error Checklist)
     | NoOp

@@ -1,4 +1,4 @@
-module Checkbox exposing (checkboxes, focusCreate, focusEdit)
+module Checkbox exposing (checkboxes, focusElement)
 
 import Dom exposing (..)
 import Html exposing (..)
@@ -127,11 +127,6 @@ checkboxError message =
     div [ HA.class "checkbox-error" ] [ text message ]
 
 
-focusCreate : Cmd Msg
-focusCreate =
-    Dom.focus "create" |> Task.attempt FocusCreate
-
-
-focusEdit : Int -> Cmd Msg
-focusEdit id =
-    toString id |> Dom.focus |> Task.attempt FocusCreate
+focusElement : String -> Cmd Msg
+focusElement elementId =
+    Dom.focus elementId |> Task.attempt FocusCreate

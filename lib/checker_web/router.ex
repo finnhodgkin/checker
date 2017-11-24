@@ -24,5 +24,6 @@ defmodule CheckerWeb.Router do
     pipe_through :api
 
     resources "/checkboxes", CheckboxController, except: [:new, :edit]
+    resources "/checklists", ChecklistController, except: [:new, :edit]
   end
 end

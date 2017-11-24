@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Checkbox exposing (focusCreate, focusEdit)
+import Checkbox exposing (focusElement)
 import Debug exposing (log)
 import Dom exposing (..)
 import Html exposing (Html)
@@ -148,7 +148,7 @@ update msg model =
             { model | error = "Failed to grab saved checkboxes" } ! []
 
         SetEdit id description set ->
-            { model | checks = setEdit id description set model.checks } ! [ focusEdit id ]
+            { model | checks = setEdit id description set model.checks } ! [ focusElement (toString id) ]
 
         CancelEdit id description ->
             { model | checks = setEdit id description False model.checks } ! []
@@ -197,7 +197,7 @@ update msg model =
                     Checkbox model.create False id False False ""
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
-                ! [ createCheckboxRequest id model.create, focusCreate ]
+                ! [ createCheckboxRequest id model.create, focusElement "create" ]
 
         CreateCheckboxDatabase id (Ok checkbox) ->
             { model
@@ -212,7 +212,7 @@ update msg model =
         FocusCreate result ->
             case result of
                 Err (Dom.NotFound id) ->
-                    { model | error = "No create element found" } ! []
+                    { model | error = "No " ++ id ++ " element found" } ! []
 
                 Ok () ->
                     model ! []
@@ -223,12 +223,20 @@ update msg model =
                 checklist list =
                     { list | editing = True, editString = list.title }
             in
-            { model | checklist = checklist model.checklist } ! []
+            { model | checklist = checklist model.checklist } ! [ focusElement "title-input" ]
 
         UpdateChecklist newTitle ->
             let
                 checklist list =
                     { list | editString = newTitle }
+            in
+            { model | checklist = checklist model.checklist } ! []
+
+        ResetChecklist ->
+            let
+                checklist : Checklist -> Checklist
+                checklist list =
+                    { list | editString = "", editing = False }
             in
             { model | checklist = checklist model.checklist } ! []
 
@@ -240,10 +248,10 @@ update msg model =
             { model | checklist = checklist model.checklist } ! [ updateChecklist model.checklist ]
 
         UpdateChecklistDatabase (Ok checklist) ->
-            model ! []
+            { model | checklist = checklist } ! []
 
-        UpdateChecklistDatabase (Err _) ->
-            model ! []
+        UpdateChecklistDatabase (Err err) ->
+            { model | error = toString err } ! []
 
         NoOp ->
             model ! []
