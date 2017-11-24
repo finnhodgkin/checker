@@ -21,7 +21,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    Model [] "" "" (Checklist "checklist title djfslj sdlkjfslkjfsdk" 1 False "") ! [ fetchInitialData ]
+    Model [] "" "" (Checklist "" 1 False "") ! [ fetchInitialData ]
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox
@@ -244,14 +244,23 @@ update msg model =
             let
                 checklist list =
                     { list | editing = False, editString = "", title = model.checklist.editString }
+
+                update =
+                    if model.checklist.editString /= "" then
+                        updateChecklist model.checklist
+                    else
+                        Cmd.none
             in
-            { model | checklist = checklist model.checklist } ! [ updateChecklist model.checklist ]
+            { model | checklist = checklist model.checklist } ! [ update ]
 
         UpdateChecklistDatabase (Ok checklist) ->
             { model | checklist = checklist } ! []
 
         UpdateChecklistDatabase (Err err) ->
             { model | error = toString err } ! []
+
+        Focus elementId ->
+            model ! [ focusElement elementId ]
 
         NoOp ->
             model ! []

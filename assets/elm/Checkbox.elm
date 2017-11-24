@@ -102,7 +102,7 @@ createCheckbox create =
     let
         submit =
             if create == "" then
-                NoOp
+                Focus "create"
             else
                 CreateCheckbox
     in

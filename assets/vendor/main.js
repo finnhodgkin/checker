@@ -13194,6 +13194,9 @@ var _user$project$Types$Checklist = F4(
 		return {title: a, id: b, editing: c, editString: d};
 	});
 var _user$project$Types$NoOp = {ctor: 'NoOp'};
+var _user$project$Types$Focus = function (a) {
+	return {ctor: 'Focus', _0: a};
+};
 var _user$project$Types$UpdateChecklistDatabase = function (a) {
 	return {ctor: 'UpdateChecklistDatabase', _0: a};
 };
@@ -13269,7 +13272,7 @@ var _user$project$Checkbox$checkboxError = function (message) {
 		});
 };
 var _user$project$Checkbox$createCheckbox = function (create) {
-	var submit = _elm_lang$core$Native_Utils.eq(create, '') ? _user$project$Types$NoOp : _user$project$Types$CreateCheckbox;
+	var submit = _elm_lang$core$Native_Utils.eq(create, '') ? _user$project$Types$Focus('create') : _user$project$Types$CreateCheckbox;
 	return A2(
 		_elm_lang$html$Html$form,
 		{
@@ -13673,7 +13676,7 @@ var _user$project$Page$inputTitle = function (checklist) {
 							_0: _elm_lang$html$Html_Events$onInput(_user$project$Types$UpdateChecklist),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onBlur(_user$project$Types$ResetChecklist),
+								_0: _elm_lang$html$Html_Events$onBlur(_user$project$Types$SetChecklist),
 								_1: {
 									ctor: '::',
 									_0: _elm_lang$html$Html_Attributes$class('checklist-header__input'),
@@ -13704,28 +13707,16 @@ var _user$project$Page$inputTitle = function (checklist) {
 };
 var _user$project$Page$editTitle = function (checklist) {
 	return checklist.editing ? A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{ctor: '[]'}) : A2(
 		_elm_lang$html$Html$i,
 		{
 			ctor: '::',
 			_0: _elm_lang$html$Html_Attributes$class('material-icons checklist-header__button'),
 			_1: {
 				ctor: '::',
-				_0: _elm_lang$html$Html_Events$onMouseDown(_user$project$Types$SetChecklist),
-				_1: {ctor: '[]'}
-			}
-		},
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html$text('done'),
-			_1: {ctor: '[]'}
-		}) : A2(
-		_elm_lang$html$Html$i,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('material-icons checklist-header__button'),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$html$Html_Events$onMouseUp(_user$project$Types$EditChecklist),
+				_0: _elm_lang$html$Html_Events$onClick(_user$project$Types$EditChecklist),
 				_1: {ctor: '[]'}
 			}
 		},
@@ -14407,6 +14398,7 @@ var _user$project$Main$update = F2(
 						}),
 					{ctor: '[]'});
 			case 'SetChecklist':
+				var update = (!_elm_lang$core$Native_Utils.eq(model.checklist.editString, '')) ? _user$project$Requests$updateChecklist(model.checklist) : _elm_lang$core$Platform_Cmd$none;
 				var checklist = function (list) {
 					return _elm_lang$core$Native_Utils.update(
 						list,
@@ -14421,7 +14413,7 @@ var _user$project$Main$update = F2(
 						}),
 					{
 						ctor: '::',
-						_0: _user$project$Requests$updateChecklist(model.checklist),
+						_0: update,
 						_1: {ctor: '[]'}
 					});
 			case 'UpdateChecklistDatabase':
@@ -14442,6 +14434,15 @@ var _user$project$Main$update = F2(
 							}),
 						{ctor: '[]'});
 				}
+			case 'Focus':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					model,
+					{
+						ctor: '::',
+						_0: _user$project$Checkbox$focusElement(_p1._0),
+						_1: {ctor: '[]'}
+					});
 			default:
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -14456,7 +14457,7 @@ var _user$project$Main$init = A2(
 		{ctor: '[]'},
 		'',
 		'',
-		A4(_user$project$Types$Checklist, 'checklist title djfslj sdlkjfslkjfsdk', 1, false, '')),
+		A4(_user$project$Types$Checklist, '', 1, false, '')),
 	{
 		ctor: '::',
 		_0: _user$project$Requests$fetchInitialData,
@@ -14473,7 +14474,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Msg":{"args":[],"tags":{"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"CancelEdit":["Int","String"],"CreateCheckboxDatabase":["Int","Result.Result Http.Error Types.Checkbox"],"SaveCheckbox":["Int","String"],"UpdateCheckbox":["Int","String"],"DeleteCheckbox":["Int","String"],"UpdateCreate":["String"],"Check":["Int"],"SetChecklist":[],"GetAll":["Result.Result Http.Error (List Types.Checkbox)"],"UpdateChecklist":["String"],"FocusCreate":["Result.Result Dom.Error ()"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SetEdit":["Int","String","Bool"],"NoOp":[],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Bool , editing : Bool , editString : String }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Bool, editString : String }"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"CancelEdit":["Int","String"],"CreateCheckboxDatabase":["Int","Result.Result Http.Error Types.Checkbox"],"SaveCheckbox":["Int","String"],"UpdateCheckbox":["Int","String"],"DeleteCheckbox":["Int","String"],"UpdateCreate":["String"],"Check":["Int"],"SetChecklist":[],"GetAll":["Result.Result Http.Error (List Types.Checkbox)"],"UpdateChecklist":["String"],"FocusCreate":["Result.Result Dom.Error ()"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SetEdit":["Int","String","Bool"],"NoOp":[],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Bool , editing : Bool , editString : String }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Bool, editString : String }"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])
