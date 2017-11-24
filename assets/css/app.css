@@ -15,3 +15,7 @@
 .unsaved {
   opacity: 0.3;
 }
+
+.pointer {
+  cursor: pointer;
+}

@@ -16,15 +16,16 @@ type alias Checkbox =
     , checked : Bool
     , id : Int
     , saved : Bool
+    , editing : Bool
     }
 
 
 type Msg
     = Check Int
     | GetAll (Result Http.Error (List Checkbox))
-    | CheckDatabase (Result Http.Error Checkbox)
     | DeleteCheckbox Int String
     | DeleteCheckboxDatabase Int (Result Http.Error String)
+    | SetEdit Int String Bool
     | UpdateCheckbox Int String
     | SaveCheckbox Int
     | UpdateCheckboxDatabase (Result Http.Error Checkbox)

@@ -50,6 +50,18 @@ isChecked id checkboxes =
             False
 
 
+setEditCheckbox : Int -> String -> Bool -> List Checkbox -> List Checkbox
+setEditCheckbox id description setEdit checkboxes =
+    let
+        edit cb =
+            if cb.id == id && cb.description == description then
+                { cb | editing = setEdit }
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
 editCheckbox : Int -> String -> List Checkbox -> List Checkbox
 editCheckbox id newDescription checkboxes =
     let
@@ -86,9 +98,21 @@ save id checkboxes saved =
     List.map save checkboxes
 
 
-noOpArg : Checkbox -> Int -> Cmd Msg
-noOpArg checkbox int =
+noOpArg : Int -> Cmd Msg
+noOpArg int =
     Cmd.none
+
+
+updateFromDatabase : Checkbox -> List Checkbox -> List Checkbox
+updateFromDatabase checkbox checkboxes =
+    let
+        update check =
+            if check.id == checkbox.id then
+                checkbox
+            else
+                check
+    in
+    List.map update checkboxes
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -98,17 +122,20 @@ update msg model =
             { model | checks = toggleChecked toggleId model.checks }
                 ! [ checkToggle toggleId (isChecked toggleId model.checks) ]
 
-        CheckDatabase (Ok checkbox) ->
-            { model | checks = save checkbox.id model.checks True } ! []
+        UpdateCheckboxDatabase (Ok checkbox) ->
+            { model | checks = updateFromDatabase checkbox model.checks } ! []
 
-        CheckDatabase (Err _) ->
-            { model | error = "Failed to update in the cloud" } ! []
+        UpdateCheckboxDatabase (Err _) ->
+            { model | error = "Failed to change the checkbox in the cloud" } ! []
 
         GetAll (Ok checkboxes) ->
             { model | checks = checkboxes, error = "" } ! []
 
         GetAll (Err _) ->
             { model | error = "Failed to grab saved checkboxes" } ! []
+
+        SetEdit id description set ->
+            { model | checks = setEditCheckbox id description set model.checks } ! []
 
         UpdateCheckbox id string ->
             { model | checks = editCheckbox id string model.checks } ! []
@@ -121,15 +148,9 @@ update msg model =
                             updateCheckbox checkbox
 
                         Nothing ->
-                            noOpArg (Checkbox "" False 1 False)
+                            noOpArg
             in
             model ! [ save id ]
-
-        UpdateCheckboxDatabase (Ok checkbox) ->
-            { model | checks = save checkbox.id model.checks True } ! []
-
-        UpdateCheckboxDatabase (Err _) ->
-            { model | error = "Failed to change the checkbox in the cloud" } ! []
 
         DeleteCheckbox id description ->
             { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]
@@ -153,7 +174,7 @@ update msg model =
                     List.length model.checks
 
                 checkbox =
-                    Checkbox model.create False id False
+                    Checkbox model.create False id False False
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
                 ! [ createCheckboxRequest id model.create, focusCreate ]

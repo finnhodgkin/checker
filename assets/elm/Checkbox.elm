@@ -41,6 +41,29 @@ updateOnSubmit checkbox =
         [ onSubmit (SaveCheckbox checkbox.id) ]
 
 
+editing : Checkbox -> Html Msg
+editing checkbox =
+    if checkbox.editing then
+        div []
+            [ Html.form (updateOnSubmit checkbox)
+                [ input
+                    [ class "checkbox-checker__label"
+                    , type_ "text"
+                    , value checkbox.description
+                    , onInput (UpdateCheckbox checkbox.id)
+                    , autocomplete False
+                    ]
+                    []
+                ]
+            , Html.i [ onClick (SetEdit checkbox.id checkbox.description False), class "material-icons pointer" ] [ text "done" ]
+            ]
+    else
+        div []
+            [ div [] [ text checkbox.description ]
+            , Html.i [ onClick (SetEdit checkbox.id checkbox.description True), class "material-icons pointer" ] [ text "edit" ]
+            ]
+
+
 checkbox : Checkbox -> Html Msg
 checkbox checkbox =
     div [ class (savedClass checkbox.saved) ]
@@ -53,18 +76,9 @@ checkbox checkbox =
                 , class "visually-hidden"
                 ]
                 []
-            , Html.form (updateOnSubmit checkbox)
-                [ input
-                    [ class "checkbox-checker__label"
-                    , type_ "text"
-                    , value checkbox.description
-                    , onInput (UpdateCheckbox checkbox.id)
-                    , autocomplete False
-                    ]
-                    []
-                ]
-            , button [ onClick (DeleteCheckbox checkbox.id checkbox.description) ] [ text "Delete" ]
             ]
+        , editing checkbox
+        , Html.i [ onClick (DeleteCheckbox checkbox.id checkbox.description), class "material-icons pointer" ] [ text "delete_forever" ]
         ]
 
 

@@ -99,7 +99,7 @@ checkToggle id checked =
                 , withCredentials = False
                 }
     in
-    Http.send CheckDatabase request
+    Http.send UpdateCheckboxDatabase request
 
 
 
@@ -156,8 +156,9 @@ listCheckboxesDecoder =
 
 checkboxDecoder : Decoder Checkbox
 checkboxDecoder =
-    Decode.map4 Checkbox
+    Decode.map5 Checkbox
         (field "description" Decode.string)
         (field "checked" Decode.bool)
         (field "id" Decode.int)
         (field "saved" Decode.bool)
+        (field "editing" Decode.bool)
