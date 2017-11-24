@@ -156,9 +156,10 @@ listCheckboxesDecoder =
 
 checkboxDecoder : Decoder Checkbox
 checkboxDecoder =
-    Decode.map5 Checkbox
+    Decode.map6 Checkbox
         (field "description" Decode.string)
         (field "checked" Decode.bool)
         (field "id" Decode.int)
         (field "saved" Decode.bool)
         (field "editing" Decode.bool)
+        (field "editString" Decode.string)

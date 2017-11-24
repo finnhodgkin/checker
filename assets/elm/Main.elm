@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Checkbox exposing (focusCreate)
+import Checkbox exposing (focusCreate, focusEdit)
 import Dom exposing (..)
 import Html exposing (Html)
 import Page exposing (content)
@@ -50,12 +50,24 @@ isChecked id checkboxes =
             False
 
 
-setEditCheckbox : Int -> String -> Bool -> List Checkbox -> List Checkbox
-setEditCheckbox id description setEdit checkboxes =
+setEdit : Int -> String -> Bool -> List Checkbox -> List Checkbox
+setEdit id description setEdit checkboxes =
     let
         edit cb =
             if cb.id == id && cb.description == description then
-                { cb | editing = setEdit }
+                { cb | editing = setEdit, editString = description }
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
+saveEdit : Int -> String -> List Checkbox -> List Checkbox
+saveEdit id editString checkboxes =
+    let
+        edit cb =
+            if cb.id == id then
+                { cb | editing = False, editString = "", description = editString }
             else
                 cb
     in
@@ -67,7 +79,7 @@ editCheckbox id newDescription checkboxes =
     let
         edit cb =
             if cb.id == id then
-                { cb | description = newDescription, saved = False }
+                { cb | editString = newDescription, saved = False }
             else
                 cb
     in
@@ -135,22 +147,25 @@ update msg model =
             { model | error = "Failed to grab saved checkboxes" } ! []
 
         SetEdit id description set ->
-            { model | checks = setEditCheckbox id description set model.checks } ! []
+            { model | checks = setEdit id description set model.checks } ! [ focusEdit id ]
+
+        CancelEdit id description ->
+            { model | checks = setEdit id description False model.checks } ! []
 
         UpdateCheckbox id string ->
             { model | checks = editCheckbox id string model.checks } ! []
 
-        SaveCheckbox id string ->
+        SaveCheckbox id description ->
             let
                 save =
                     case findCheckbox id model.checks of
                         Just checkbox ->
-                            updateCheckbox checkbox
+                            updateCheckbox { checkbox | description = description }
 
                         Nothing ->
                             noOpArg
             in
-            { model | checks = setEditCheckbox id string False model.checks } ! [ save id ]
+            { model | checks = saveEdit id description model.checks } ! [ save id ]
 
         DeleteCheckbox id description ->
             { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]
@@ -174,7 +189,7 @@ update msg model =
                     List.length model.checks * -1
 
                 checkbox =
-                    Checkbox model.create False id False False
+                    Checkbox model.create False id False False ""
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
                 ! [ createCheckboxRequest id model.create, focusCreate ]

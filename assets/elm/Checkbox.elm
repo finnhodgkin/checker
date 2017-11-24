@@ -1,4 +1,4 @@
-module Checkbox exposing (checkboxes, focusCreate)
+module Checkbox exposing (checkboxes, focusCreate, focusEdit)
 
 import Dom exposing (..)
 import Html exposing (..)
@@ -11,7 +11,7 @@ import Types exposing (..)
 checkboxes : Model -> Html Msg
 checkboxes model =
     div [ class "checkboxes" ]
-        [ div [] (List.map checkbox (List.sortBy .id model.checks))
+        [ div [] (List.map checkbox (List.sortBy .description model.checks))
         , createCheckbox model.create
         , checkboxError model.error
         ]
@@ -37,10 +37,10 @@ savedClass saved =
 
 updateOnSubmit : Checkbox -> Attribute Msg
 updateOnSubmit checkbox =
-    if checkbox.description == "" then
+    if checkbox.editString == "" then
         onSubmit (DeleteCheckbox checkbox.id checkbox.description)
     else
-        onSubmit (SaveCheckbox checkbox.id checkbox.description)
+        onSubmit (SaveCheckbox checkbox.id checkbox.editString)
 
 
 editing : Checkbox -> Html Msg
@@ -51,7 +51,7 @@ editing checkbox =
                 [ class "checkbox--text checkbox--input"
                 , id (toString checkbox.id)
                 , type_ "text"
-                , value checkbox.description
+                , value checkbox.editString
                 , onInput (UpdateCheckbox checkbox.id)
                 , autocomplete False
                 ]
@@ -64,7 +64,7 @@ editing checkbox =
 editingButton : Checkbox -> Html Msg
 editingButton checkbox =
     if checkbox.editing then
-        Html.i [ onClick (SetEdit checkbox.id checkbox.description False), class "material-icons button--rounded button--pad" ] [ text "done" ]
+        Html.i [ onClick (SaveCheckbox checkbox.id checkbox.editString), class "material-icons button--rounded button--pad" ] [ text "done" ]
     else
         Html.i [ onClick (SetEdit checkbox.id checkbox.description True), class "material-icons button--rounded button--pad" ] [ text "edit" ]
 
@@ -72,7 +72,7 @@ editingButton checkbox =
 rightButton : Checkbox -> Html Msg
 rightButton checkbox =
     if checkbox.editing then
-        Html.i [ class "material-icons button--rounded" ] [ text "close" ]
+        Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "close" ]
     else
         Html.i [ onClick (DeleteCheckbox checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "delete_forever" ]
 
@@ -130,3 +130,8 @@ checkboxError message =
 focusCreate : Cmd Msg
 focusCreate =
     Dom.focus "create" |> Task.attempt FocusCreate
+
+
+focusEdit : Int -> Cmd Msg
+focusEdit id =
+    toString id |> Dom.focus |> Task.attempt FocusCreate

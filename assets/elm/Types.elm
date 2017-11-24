@@ -17,6 +17,7 @@ type alias Checkbox =
     , id : Int
     , saved : Bool
     , editing : Bool
+    , editString : String
     }
 
 
@@ -26,6 +27,7 @@ type Msg
     | DeleteCheckbox Int String
     | DeleteCheckboxDatabase Int (Result Http.Error String)
     | SetEdit Int String Bool
+    | CancelEdit Int String
     | UpdateCheckbox Int String
     | SaveCheckbox Int String
     | UpdateCheckboxDatabase (Result Http.Error Checkbox)
