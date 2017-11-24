@@ -13824,32 +13824,41 @@ var _user$project$Requests$encodeList = function (title) {
 			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Requests$encodeCheckbox = function (description) {
-	var checkbox = _elm_lang$core$Json_Encode$object(
-		{
-			ctor: '::',
-			_0: {
-				ctor: '_Tuple2',
-				_0: 'description',
-				_1: _elm_lang$core$Json_Encode$string(description)
-			},
-			_1: {
+var _user$project$Requests$encodeCheckbox = F2(
+	function (description, checklistId) {
+		var checkbox = _elm_lang$core$Json_Encode$object(
+			{
 				ctor: '::',
 				_0: {
 					ctor: '_Tuple2',
-					_0: 'checked',
-					_1: _elm_lang$core$Json_Encode$bool(false)
+					_0: 'description',
+					_1: _elm_lang$core$Json_Encode$string(description)
 				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'checked',
+						_1: _elm_lang$core$Json_Encode$bool(false)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'checklist_id',
+							_1: _elm_lang$core$Json_Encode$int(checklistId)
+						},
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'checkbox', _1: checkbox},
 				_1: {ctor: '[]'}
-			}
-		});
-	return _elm_lang$core$Json_Encode$object(
-		{
-			ctor: '::',
-			_0: {ctor: '_Tuple2', _0: 'checkbox', _1: checkbox},
-			_1: {ctor: '[]'}
-		});
-};
+			});
+	});
 var _user$project$Requests$encodeToggle = F2(
 	function (id, checked) {
 		var checkbox = _elm_lang$core$Json_Encode$object(
@@ -14013,8 +14022,8 @@ var _user$project$Requests$deleteCheckboxRequest = function (id) {
 		_user$project$Types$DeleteCheckboxDatabase(id),
 		request);
 };
-var _user$project$Requests$createCheckboxRequest = F2(
-	function (id, description) {
+var _user$project$Requests$createCheckboxRequest = F3(
+	function (id, description, listId) {
 		var url = '/checkboxes';
 		return A2(
 			_elm_lang$http$Http$send,
@@ -14023,7 +14032,7 @@ var _user$project$Requests$createCheckboxRequest = F2(
 				_elm_lang$http$Http$post,
 				url,
 				_elm_lang$http$Http$jsonBody(
-					_user$project$Requests$encodeCheckbox(description)),
+					A2(_user$project$Requests$encodeCheckbox, description, listId)),
 				A2(
 					_elm_lang$core$Json_Decode$at,
 					{
@@ -14033,13 +14042,16 @@ var _user$project$Requests$createCheckboxRequest = F2(
 					},
 					_user$project$Requests$checkboxDecoder)));
 	});
-var _user$project$Requests$fetchInitialData = function () {
-	var url = '/checkboxes';
+var _user$project$Requests$fetchInitialData = function (id) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		'/checkboxes?id=',
+		_elm_lang$core$Basics$toString(id));
 	return A2(
 		_elm_lang$http$Http$send,
 		_user$project$Types$GetAll,
 		A2(_elm_lang$http$Http$get, url, _user$project$Requests$listCheckboxesDecoder));
-}();
+};
 
 var _user$project$Main$view = function (model) {
 	return _user$project$Page$content(model);
@@ -14305,7 +14317,7 @@ var _user$project$Main$update = F2(
 						}),
 					{
 						ctor: '::',
-						_0: A2(_user$project$Requests$createCheckboxRequest, id, model.create),
+						_0: A3(_user$project$Requests$createCheckboxRequest, id, model.create, model.checklist.id),
 						_1: {
 							ctor: '::',
 							_0: _user$project$Checkbox$focusElement('create'),
@@ -14457,10 +14469,10 @@ var _user$project$Main$init = A2(
 		{ctor: '[]'},
 		'',
 		'',
-		A4(_user$project$Types$Checklist, '', 1, false, '')),
+		A4(_user$project$Types$Checklist, '', 2, false, '')),
 	{
 		ctor: '::',
-		_0: _user$project$Requests$fetchInitialData,
+		_0: _user$project$Requests$fetchInitialData(1),
 		_1: {ctor: '[]'}
 	});
 var _user$project$Main$main = _elm_lang$html$Html$program(

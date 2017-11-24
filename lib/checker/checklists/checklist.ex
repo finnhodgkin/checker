@@ -6,6 +6,7 @@ defmodule Checker.Checklists.Checklist do
 
   schema "checklists" do
     field :title, :string
+    has_many :checkbox, Checker.Checkboxes.Checkbox
 
     timestamps()
   end

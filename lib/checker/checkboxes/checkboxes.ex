@@ -17,8 +17,12 @@ defmodule Checker.Checkboxes do
       [%Checkbox{}, ...]
 
   """
-  def list_checkboxes do
-    Repo.all(Checkbox)
+  def list_checkboxes(id) do
+    query = from cb in Checkbox,
+            join: cl in assoc(cb, :checklist),
+            where: cl.id == ^id
+
+    Repo.all(query)
   end
 
   @doc """
@@ -51,6 +55,7 @@ defmodule Checker.Checkboxes do
   """
   def create_checkbox(attrs \\ %{}) do
     %Checkbox{}
+    |> Repo.preload(:checklist)
     |> Checkbox.changeset(attrs)
     |> Repo.insert()
   end

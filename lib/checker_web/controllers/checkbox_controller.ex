@@ -6,8 +6,8 @@ defmodule CheckerWeb.CheckboxController do
 
   action_fallback CheckerWeb.FallbackController
 
-  def index(conn, _params) do
-    checkboxes = Checkboxes.list_checkboxes()
+  def index(conn, %{"id" => id}) do
+    checkboxes = Checkboxes.list_checkboxes(id)
     render(conn, "index.json", checkboxes: checkboxes)
   end
 

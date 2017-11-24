@@ -7,6 +7,7 @@ defmodule Checker.Checkboxes.Checkbox do
   schema "checkboxes" do
     field :checked, :boolean, default: false
     field :description, :string
+    belongs_to :checklist, Checker.Checklists.Checklist
 
     timestamps()
   end
@@ -14,7 +15,7 @@ defmodule Checker.Checkboxes.Checkbox do
   @doc false
   def changeset(%Checkbox{} = checkbox, attrs) do
     checkbox
-    |> cast(attrs, [:description, :checked])
-    |> validate_required([:description, :checked])
+    |> cast(attrs, [:description, :checked, :checklist_id])
+    |> validate_required([:description, :checked, :checklist_id])
   end
 end

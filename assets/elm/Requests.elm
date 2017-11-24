@@ -9,22 +9,22 @@ import Types exposing (..)
 -- REQUESTS
 
 
-fetchInitialData : Cmd Msg
-fetchInitialData =
+fetchInitialData : Int -> Cmd Msg
+fetchInitialData id =
     let
         url =
-            "/checkboxes"
+            "/checkboxes?id=" ++ toString id
     in
     Http.send GetAll (Http.get url listCheckboxesDecoder)
 
 
-createCheckboxRequest : Int -> String -> Cmd Msg
-createCheckboxRequest id description =
+createCheckboxRequest : Int -> String -> Int -> Cmd Msg
+createCheckboxRequest id description listId =
     let
         url =
             "/checkboxes"
     in
-    Http.send (CreateCheckboxDatabase id) (Http.post url (Http.jsonBody <| encodeCheckbox description) (Decode.at [ "data" ] checkboxDecoder))
+    Http.send (CreateCheckboxDatabase id) (Http.post url (Http.jsonBody <| encodeCheckbox description listId) (Decode.at [ "data" ] checkboxDecoder))
 
 
 deleteCheckboxRequest : Int -> Cmd Msg
@@ -158,13 +158,14 @@ encodeToggle id checked =
         ]
 
 
-encodeCheckbox : String -> Value
-encodeCheckbox description =
+encodeCheckbox : String -> Int -> Value
+encodeCheckbox description checklistId =
     let
         checkbox =
             JE.object
                 [ ( "description", JE.string description )
                 , ( "checked", JE.bool False )
+                , ( "checklist_id", JE.int checklistId )
                 ]
     in
     JE.object

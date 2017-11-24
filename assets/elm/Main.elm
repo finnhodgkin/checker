@@ -21,7 +21,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    Model [] "" "" (Checklist "" 1 False "") ! [ fetchInitialData ]
+    Model [] "" "" (Checklist "" 2 False "") ! [ fetchInitialData 1 ]
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox
@@ -197,7 +197,7 @@ update msg model =
                     Checkbox model.create False id False False ""
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
-                ! [ createCheckboxRequest id model.create, focusElement "create" ]
+                ! [ createCheckboxRequest id model.create model.checklist.id, focusElement "create" ]
 
         CreateCheckboxDatabase id (Ok checkbox) ->
             { model
