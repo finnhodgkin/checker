@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Checkbox exposing (focusCreate, focusEdit)
+import Debug exposing (log)
 import Dom exposing (..)
 import Html exposing (Html)
 import Page exposing (content)
@@ -20,7 +21,7 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    Model [] "" "" ! [ fetchInitialData ]
+    Model [] "" "" (Checklist "checklist title djfslj sdlkjfslkjfsdk" 1 False "") ! [ fetchInitialData ]
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox
@@ -175,10 +176,14 @@ update msg model =
                 delete check =
                     not (check.id == id)
             in
-            { model | checks = List.filter delete model.checks, error = "Trimmed from the cloud" } ! []
+            { model | checks = List.filter delete model.checks } ! []
 
-        DeleteCheckboxDatabase id (Err _) ->
-            { model | error = "Failed to remove checkbox from the cloud" } ! []
+        DeleteCheckboxDatabase id (Err test) ->
+            let
+                hi =
+                    log (toString test)
+            in
+            { model | error = "" } ! []
 
         UpdateCreate toCreate ->
             { model | create = toCreate } ! []
@@ -196,8 +201,8 @@ update msg model =
 
         CreateCheckboxDatabase id (Ok checkbox) ->
             { model
-                | error = "Successfully added checkbox to the cloud"
-                , checks = updateCheckboxId id checkbox.description checkbox.id model.checks
+                | checks =
+                    updateCheckboxId id checkbox.description checkbox.id model.checks
             }
                 ! []
 
@@ -211,6 +216,34 @@ update msg model =
 
                 Ok () ->
                     model ! []
+
+        EditChecklist ->
+            let
+                checklist : Checklist -> Checklist
+                checklist list =
+                    { list | editing = True, editString = list.title }
+            in
+            { model | checklist = checklist model.checklist } ! []
+
+        UpdateChecklist newTitle ->
+            let
+                checklist list =
+                    { list | editString = newTitle }
+            in
+            { model | checklist = checklist model.checklist } ! []
+
+        SetChecklist ->
+            let
+                checklist list =
+                    { list | editing = False, editString = "", title = model.checklist.editString }
+            in
+            { model | checklist = checklist model.checklist } ! [ updateChecklist model.checklist ]
+
+        UpdateChecklistDatabase (Ok checklist) ->
+            model ! []
+
+        UpdateChecklistDatabase (Err _) ->
+            model ! []
 
         NoOp ->
             model ! []

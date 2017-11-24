@@ -102,6 +102,32 @@ checkToggle id checked =
     Http.send UpdateCheckboxDatabase request
 
 
+updateChecklist : Checklist -> Cmd Msg
+updateChecklist list =
+    let
+        url =
+            "/checklist/" ++ toString list.id
+
+        body =
+            Http.jsonBody <| encodeList list.title
+
+        expectedChecklist =
+            Http.expectJson (Decode.at [ "data" ] listDecoder)
+
+        listRequest =
+            Http.request
+                { method = "PUT"
+                , headers = []
+                , url = url
+                , body = body
+                , expect = expectedChecklist
+                , timeout = Nothing
+                , withCredentials = False
+                }
+    in
+    Http.send UpdateChecklistDatabase listRequest
+
+
 
 -- ENCODERS
 
@@ -145,6 +171,16 @@ encodeCheckbox description =
         [ ( "checkbox", checkbox ) ]
 
 
+encodeList : String -> Value
+encodeList title =
+    let
+        checklist =
+            JE.object
+                [ ( "title", JE.string title ) ]
+    in
+    JE.object [ ( "checklist", checklist ) ]
+
+
 
 -- DECODERS
 
@@ -163,3 +199,13 @@ checkboxDecoder =
         (field "saved" Decode.bool)
         (field "editing" Decode.bool)
         (field "editString" Decode.string)
+
+
+listDecoder : Decoder Checklist
+listDecoder =
+    Decode.at [ "data" ] <|
+        Decode.map4 Checklist
+            (field "title" Decode.string)
+            (field "id" Decode.int)
+            (field "editing" Decode.bool)
+            (field "editString" Decode.string)

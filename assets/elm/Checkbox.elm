@@ -102,23 +102,23 @@ createCheckbox create =
     let
         submit =
             if create == "" then
-                onSubmit NoOp
+                NoOp
             else
-                onSubmit CreateCheckbox
+                CreateCheckbox
     in
-    Html.form [ submit, class "checkbox-create" ]
-        [ label [ class "checkbox-create__label" ]
-            [ input
-                [ type_ "text"
-                , onInput UpdateCreate
-                , id "create"
-                , class "checkbox-create__input"
-                , value create
-                , autocomplete False
-                ]
-                []
-            , text "Add a checkbox"
+    Html.form [ onSubmit submit, class "create-checkbox" ]
+        [ input
+            [ type_ "text"
+            , onInput UpdateCreate
+            , id "create"
+            , class "create-checkbox__input"
+            , value create
+            , autocomplete False
             ]
+            []
+        , Html.i [ onClick submit, class "material-icons button--rounded button--left-pad" ] [ text "add" ]
+        , label [ class "visually-hidden" ]
+            [ text "Add a checkbox" ]
         ]
 
 

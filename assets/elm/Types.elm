@@ -8,6 +8,7 @@ type alias Model =
     { checks : List Checkbox
     , error : String
     , create : String
+    , checklist : Checklist
     }
 
 
@@ -16,6 +17,14 @@ type alias Checkbox =
     , checked : Bool
     , id : Int
     , saved : Bool
+    , editing : Bool
+    , editString : String
+    }
+
+
+type alias Checklist =
+    { title : String
+    , id : Int
     , editing : Bool
     , editString : String
     }
@@ -35,4 +44,8 @@ type Msg
     | CreateCheckbox
     | CreateCheckboxDatabase Int (Result Http.Error Checkbox)
     | FocusCreate (Result Dom.Error ())
+    | EditChecklist
+    | UpdateChecklist String
+    | SetChecklist
+    | UpdateChecklistDatabase (Result Http.Error Checklist)
     | NoOp
