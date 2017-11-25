@@ -13181,9 +13181,9 @@ var _elm_lang$http$Http$StringPart = F2(
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
-var _user$project$Types$Model = F4(
-	function (a, b, c, d) {
-		return {checks: a, error: b, create: c, checklist: d};
+var _user$project$Types$Model = F5(
+	function (a, b, c, d, e) {
+		return {checks: a, error: b, create: c, checklist: d, auth: e};
 	});
 var _user$project$Types$Checkbox = F6(
 	function (a, b, c, d, e, f) {
@@ -13193,6 +13193,9 @@ var _user$project$Types$Checklist = F4(
 	function (a, b, c, d) {
 		return {title: a, id: b, editing: c, editString: d};
 	});
+var _user$project$Types$Auth = function (a) {
+	return {token: a};
+};
 var _user$project$Types$NoOp = {ctor: 'NoOp'};
 var _user$project$Types$Focus = function (a) {
 	return {ctor: 'Focus', _0: a};
@@ -13249,6 +13252,21 @@ var _user$project$Types$GetAll = function (a) {
 };
 var _user$project$Types$Check = function (a) {
 	return {ctor: 'Check', _0: a};
+};
+
+var _user$project$Authentication$authenticateView = function (model) {
+	return A2(
+		_elm_lang$html$Html$a,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$href('https://www.facebook.com/v2.11/dialog/oauth?client_id=1639208492813532&redirect_uri=http://localhost:4000/auth/facebook/callback'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text('Log in with facebook'),
+			_1: {ctor: '[]'}
+		});
 };
 
 var _user$project$Checkbox$focusElement = function (elementId) {
@@ -13727,7 +13745,7 @@ var _user$project$Page$editTitle = function (checklist) {
 		});
 };
 var _user$project$Page$content = function (model) {
-	return A2(
+	return _elm_lang$core$Native_Utils.eq(model.auth.token, '') ? _user$project$Authentication$authenticateView(model) : A2(
 		_elm_lang$html$Html$main_,
 		{ctor: '[]'},
 		{
@@ -14462,26 +14480,57 @@ var _user$project$Main$update = F2(
 					{ctor: '[]'});
 		}
 	});
-var _user$project$Main$init = A2(
-	_elm_lang$core$Platform_Cmd_ops['!'],
-	A4(
-		_user$project$Types$Model,
-		{ctor: '[]'},
-		'',
-		'',
-		A4(_user$project$Types$Checklist, '', 2, false, '')),
-	{
-		ctor: '::',
-		_0: _user$project$Requests$fetchInitialData(1),
-		_1: {ctor: '[]'}
-	});
-var _user$project$Main$main = _elm_lang$html$Html$program(
+var _user$project$Main$init = function (authToken) {
+	var _p10 = authToken;
+	if (_p10.ctor === 'Just') {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A5(
+				_user$project$Types$Model,
+				{ctor: '[]'},
+				'',
+				'',
+				A4(_user$project$Types$Checklist, '', 1, false, ''),
+				_user$project$Types$Auth(_p10._0)),
+			{
+				ctor: '::',
+				_0: _user$project$Requests$fetchInitialData(1),
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A5(
+				_user$project$Types$Model,
+				{ctor: '[]'},
+				'',
+				'',
+				A4(_user$project$Types$Checklist, '', 1, false, ''),
+				_user$project$Types$Auth('')),
+			{
+				ctor: '::',
+				_0: _user$project$Requests$fetchInitialData(1),
+				_1: {ctor: '[]'}
+			});
+	}
+};
+var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
 	{
 		init: _user$project$Main$init,
 		update: _user$project$Main$update,
 		view: _user$project$Main$view,
 		subscriptions: _elm_lang$core$Basics$always(_elm_lang$core$Platform_Sub$none)
-	})();
+	})(
+	_elm_lang$core$Json_Decode$oneOf(
+		{
+			ctor: '::',
+			_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+			_1: {
+				ctor: '::',
+				_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
+				_1: {ctor: '[]'}
+			}
+		}));
 
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};

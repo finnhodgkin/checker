@@ -9,6 +9,7 @@ type alias Model =
     , error : String
     , create : String
     , checklist : Checklist
+    , auth : Auth
     }
 
 
@@ -27,6 +28,11 @@ type alias Checklist =
     , id : Int
     , editing : Bool
     , editString : String
+    }
+
+
+type alias Auth =
+    { token : String
     }
 
 

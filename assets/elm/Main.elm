@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Authentication exposing (..)
 import Checkbox exposing (focusElement)
 import Debug exposing (log)
 import Dom exposing (..)
@@ -9,9 +10,9 @@ import Requests exposing (..)
 import Types exposing (..)
 
 
-main : Program Never Model Msg
+main : Program (Maybe String) Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , update = update
         , view = view
@@ -19,9 +20,14 @@ main =
         }
 
 
-init : ( Model, Cmd Msg )
-init =
-    Model [] "" "" (Checklist "" 2 False "") ! [ fetchInitialData 1 ]
+init : Maybe String -> ( Model, Cmd Msg )
+init authToken =
+    case authToken of
+        Just token ->
+            Model [] "" "" (Checklist "" 1 False "") (Auth token) ! [ fetchInitialData 1 ]
+
+        Nothing ->
+            Model [] "" "" (Checklist "" 1 False "") (Auth "") ! [ fetchInitialData 1 ]
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox

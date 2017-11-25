@@ -1,5 +1,6 @@
 module Page exposing (content)
 
+import Authentication exposing (authenticateView)
 import Checkbox exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, id, type_, value)
@@ -32,13 +33,16 @@ backButton =
 
 content : Model -> Html Msg
 content model =
-    Html.main_ []
-        [ header [ class "checklist-header" ]
-            [ section [ class "checklist-header__wrap" ]
-                [ backButton
-                , inputTitle model.checklist
-                , editTitle model.checklist
+    if model.auth.token == "" then
+        authenticateView model
+    else
+        Html.main_ []
+            [ header [ class "checklist-header" ]
+                [ section [ class "checklist-header__wrap" ]
+                    [ backButton
+                    , inputTitle model.checklist
+                    , editTitle model.checklist
+                    ]
                 ]
+            , section [ class "mobile-container" ] [ checkboxes model ]
             ]
-        , section [ class "mobile-container" ] [ checkboxes model ]
-        ]
