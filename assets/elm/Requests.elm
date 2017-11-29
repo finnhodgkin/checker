@@ -18,6 +18,38 @@ fetchInitialData id =
     Http.send GetAll (Http.get url listCheckboxesDecoder)
 
 
+getLists : String -> Cmd Msg
+getLists token =
+    let
+        url =
+            "/checklists"
+
+        expected =
+            Http.expectJson <| listChecklistDecoder
+
+        request =
+            Http.request
+                { method = "GET"
+                , headers = [ Http.header "Authorization" ("Bearer " ++ token) ]
+                , url = url
+                , body = Http.emptyBody
+                , expect = expected
+                , timeout = Nothing
+                , withCredentials = False
+                }
+    in
+    Http.send ShowLists request
+
+
+
+-- fetchLists token =
+--   let
+--     url =
+--       "/checklists"
+--   in
+--   Http.send ShowChecklists
+
+
 createCheckboxRequest : Int -> String -> Int -> Cmd Msg
 createCheckboxRequest id description listId =
     let
@@ -184,6 +216,20 @@ encodeList title =
 
 
 -- DECODERS
+
+
+listChecklistDecoder : Decoder (List Checklist)
+listChecklistDecoder =
+    Decode.at [ "data" ] (Decode.list checklistDecoder)
+
+
+checklistDecoder : Decoder Checklist
+checklistDecoder =
+    Decode.map4 Checklist
+        (field "title" Decode.string)
+        (field "id" Decode.int)
+        (field "editing" Decode.bool)
+        (field "editString" Decode.string)
 
 
 listCheckboxesDecoder : Decoder (List Checkbox)

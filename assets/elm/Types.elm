@@ -10,6 +10,7 @@ type alias Model =
     , create : String
     , checklist : Checklist
     , auth : Auth
+    , checklists : List Checklist
     }
 
 
@@ -54,6 +55,7 @@ type Msg
     | UpdateChecklist String
     | SetChecklist
     | ResetChecklist
+    | ShowLists (Result Http.Error (List Checklist))
     | UpdateChecklistDatabase (Result Http.Error Checklist)
     | Focus String
     | NoOp

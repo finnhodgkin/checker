@@ -13181,9 +13181,9 @@ var _elm_lang$http$Http$StringPart = F2(
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
-var _user$project$Types$Model = F5(
-	function (a, b, c, d, e) {
-		return {checks: a, error: b, create: c, checklist: d, auth: e};
+var _user$project$Types$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {checks: a, error: b, create: c, checklist: d, auth: e, checklists: f};
 	});
 var _user$project$Types$Checkbox = F6(
 	function (a, b, c, d, e, f) {
@@ -13202,6 +13202,9 @@ var _user$project$Types$Focus = function (a) {
 };
 var _user$project$Types$UpdateChecklistDatabase = function (a) {
 	return {ctor: 'UpdateChecklistDatabase', _0: a};
+};
+var _user$project$Types$ShowLists = function (a) {
+	return {ctor: 'ShowLists', _0: a};
 };
 var _user$project$Types$ResetChecklist = {ctor: 'ResetChecklist'};
 var _user$project$Types$SetChecklist = {ctor: 'SetChecklist'};
@@ -13824,6 +13827,21 @@ var _user$project$Requests$listCheckboxesDecoder = A2(
 		_1: {ctor: '[]'}
 	},
 	_elm_lang$core$Json_Decode$list(_user$project$Requests$checkboxDecoder));
+var _user$project$Requests$checklistDecoder = A5(
+	_elm_lang$core$Json_Decode$map4,
+	_user$project$Types$Checklist,
+	A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'editing', _elm_lang$core$Json_Decode$bool),
+	A2(_elm_lang$core$Json_Decode$field, 'editString', _elm_lang$core$Json_Decode$string));
+var _user$project$Requests$listChecklistDecoder = A2(
+	_elm_lang$core$Json_Decode$at,
+	{
+		ctor: '::',
+		_0: 'data',
+		_1: {ctor: '[]'}
+	},
+	_elm_lang$core$Json_Decode$list(_user$project$Requests$checklistDecoder));
 var _user$project$Requests$encodeList = function (title) {
 	var checklist = _elm_lang$core$Json_Encode$object(
 		{
@@ -14060,6 +14078,28 @@ var _user$project$Requests$createCheckboxRequest = F3(
 					},
 					_user$project$Requests$checkboxDecoder)));
 	});
+var _user$project$Requests$getLists = function (token) {
+	var expected = _elm_lang$http$Http$expectJson(_user$project$Requests$listChecklistDecoder);
+	var url = '/checklists';
+	var request = _elm_lang$http$Http$request(
+		{
+			method: 'GET',
+			headers: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$http$Http$header,
+					'Authorization',
+					A2(_elm_lang$core$Basics_ops['++'], 'Bearer ', token)),
+				_1: {ctor: '[]'}
+			},
+			url: url,
+			body: _elm_lang$http$Http$emptyBody,
+			expect: expected,
+			timeout: _elm_lang$core$Maybe$Nothing,
+			withCredentials: false
+		});
+	return A2(_elm_lang$http$Http$send, _user$project$Types$ShowLists, request);
+};
 var _user$project$Requests$fetchInitialData = function (id) {
 	var url = A2(
 		_elm_lang$core$Basics_ops['++'],
@@ -14371,8 +14411,8 @@ var _user$project$Main$update = F2(
 							{
 								error: A2(
 									_elm_lang$core$Basics_ops['++'],
-									'No ',
-									A2(_elm_lang$core$Basics_ops['++'], _p9._0._0, ' element found'))
+									'No \'',
+									A2(_elm_lang$core$Basics_ops['++'], _p9._0._0, '\' element found'))
 							}),
 						{ctor: '[]'});
 				} else {
@@ -14464,6 +14504,24 @@ var _user$project$Main$update = F2(
 							}),
 						{ctor: '[]'});
 				}
+			case 'ShowLists':
+				if (_p1._0.ctor === 'Ok') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{checklists: _p1._0._0}),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{
+								error: _elm_lang$core$Basics$toString(_p1._0._0)
+							}),
+						{ctor: '[]'});
+				}
 			case 'Focus':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -14483,35 +14541,34 @@ var _user$project$Main$update = F2(
 var _user$project$Main$init = function (authToken) {
 	var _p10 = authToken;
 	if (_p10.ctor === 'Just') {
+		var _p11 = _p10._0;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			A5(
+			A6(
 				_user$project$Types$Model,
 				{ctor: '[]'},
 				'',
 				'',
 				A4(_user$project$Types$Checklist, '', 1, false, ''),
-				_user$project$Types$Auth(_p10._0)),
+				_user$project$Types$Auth(_p11),
+				{ctor: '[]'}),
 			{
 				ctor: '::',
-				_0: _user$project$Requests$fetchInitialData(1),
+				_0: _user$project$Requests$getLists(_p11),
 				_1: {ctor: '[]'}
 			});
 	} else {
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			A5(
+			A6(
 				_user$project$Types$Model,
 				{ctor: '[]'},
 				'',
 				'',
 				A4(_user$project$Types$Checklist, '', 1, false, ''),
-				_user$project$Types$Auth('')),
-			{
-				ctor: '::',
-				_0: _user$project$Requests$fetchInitialData(1),
-				_1: {ctor: '[]'}
-			});
+				_user$project$Types$Auth(''),
+				{ctor: '[]'}),
+			{ctor: '[]'});
 	}
 };
 var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
@@ -14535,7 +14592,7 @@ var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"CancelEdit":["Int","String"],"CreateCheckboxDatabase":["Int","Result.Result Http.Error Types.Checkbox"],"SaveCheckbox":["Int","String"],"UpdateCheckbox":["Int","String"],"DeleteCheckbox":["Int","String"],"UpdateCreate":["String"],"Check":["Int"],"SetChecklist":[],"GetAll":["Result.Result Http.Error (List Types.Checkbox)"],"UpdateChecklist":["String"],"FocusCreate":["Result.Result Dom.Error ()"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SetEdit":["Int","String","Bool"],"NoOp":[],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Bool , editing : Bool , editString : String }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Bool, editString : String }"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"CancelEdit":["Int","String"],"CreateCheckboxDatabase":["Int","Result.Result Http.Error Types.Checkbox"],"SaveCheckbox":["Int","String"],"UpdateCheckbox":["Int","String"],"DeleteCheckbox":["Int","String"],"UpdateCreate":["String"],"Check":["Int"],"SetChecklist":[],"GetAll":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"UpdateChecklist":["String"],"FocusCreate":["Result.Result Dom.Error ()"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SetEdit":["Int","String","Bool"],"NoOp":[],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Bool , editing : Bool , editString : String }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Bool, editString : String }"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])

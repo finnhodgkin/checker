@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import Authentication exposing (..)
 import Checkbox exposing (focusElement)
 import Debug exposing (log)
 import Dom exposing (..)
@@ -24,10 +23,10 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 1 False "") (Auth token) ! [ fetchInitialData 1 ]
+            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] ! [ getLists token ]
 
         Nothing ->
-            Model [] "" "" (Checklist "" 1 False "") (Auth "") ! [ fetchInitialData 1 ]
+            Model [] "" "" (Checklist "" 0 False "") (Auth "") [] ! []
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox
@@ -218,7 +217,7 @@ update msg model =
         FocusCreate result ->
             case result of
                 Err (Dom.NotFound id) ->
-                    { model | error = "No " ++ id ++ " element found" } ! []
+                    { model | error = "No '" ++ id ++ "' element found" } ! []
 
                 Ok () ->
                     model ! []
@@ -263,6 +262,12 @@ update msg model =
             { model | checklist = checklist } ! []
 
         UpdateChecklistDatabase (Err err) ->
+            { model | error = toString err } ! []
+
+        ShowLists (Ok checklists) ->
+            { model | checklists = checklists } ! []
+
+        ShowLists (Err err) ->
             { model | error = toString err } ! []
 
         Focus elementId ->

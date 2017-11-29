@@ -35,6 +35,8 @@ content : Model -> Html Msg
 content model =
     if model.auth.token == "" then
         authenticateView model
+    else if model.checklist.id /= 0 then
+        checklist model
     else
         Html.main_ []
             [ header [ class "checklist-header" ]
