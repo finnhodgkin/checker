@@ -13,7 +13,14 @@ type alias Model =
     , checklists : List Checklist
     , createChecklist : String
     , savedChecklist : Status
+    , checkboxLoaded : Load
     }
+
+
+type Load
+    = Loaded
+    | Loading
+    | Empty
 
 
 type Status

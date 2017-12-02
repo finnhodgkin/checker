@@ -23,7 +23,7 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] "" Unloaded ! [ getLists token ]
+            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] "" Unloaded Empty ! [ getLists token ]
 
         Nothing ->
             Model []
@@ -34,6 +34,7 @@ init authToken =
                 []
                 ""
                 Unloaded
+                Empty
                 ! []
 
 
@@ -155,10 +156,10 @@ update msg model =
             { model | error = "Failed to change the checkbox in the cloud" } ! []
 
         GetAll (Ok checkboxes) ->
-            { model | checks = checkboxes, error = "" } ! []
+            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! []
 
         GetAll (Err _) ->
-            { model | error = "Failed to grab saved checkboxes" } ! []
+            { model | error = "Failed to grab saved checkboxes", checkboxLoaded = Empty } ! []
 
         SetEdit id description set ->
             { model | checks = setEdit id description set model.checks } ! [ focusElement (toString id) ]
@@ -249,7 +250,7 @@ update msg model =
             { model | createChecklist = listName } ! []
 
         SetList checklist ->
-            { model | checklist = checklist } ! [ fetchInitialData model.auth.token checklist.id ]
+            { model | checklist = checklist, checkboxLoaded = Loading } ! [ fetchInitialData model.auth.token checklist.id ]
 
         EditChecklist ->
             let
@@ -267,7 +268,7 @@ update msg model =
             { model | checklist = checklist model.checklist } ! []
 
         DeleteChecklist ->
-            model ! [ deleteChecklist model ]
+            { model | checks = [] } ! [ deleteChecklist model ]
 
         DeleteChecklistDatabase id (Ok checklist) ->
             let
@@ -280,7 +281,7 @@ update msg model =
             { model | error = toString err } ! []
 
         ResetChecklist ->
-            { model | checklist = Checklist "" 0 False "", checks = [] } ! []
+            { model | checklist = Checklist "" 0 False "", checks = [], checkboxLoaded = Empty } ! []
 
         SetChecklist ->
             let
@@ -299,10 +300,10 @@ update msg model =
             { model | checklist = checklist } ! []
 
         UpdateChecklistDatabase (Err err) ->
-            { model | error = toString err } ! []
+            { model | error = toString err, checkboxLoaded = Empty } ! []
 
         ShowLists (Ok checklists) ->
-            { model | checklists = checklists } ! []
+            { model | checklists = checklists, checkboxLoaded = Empty } ! []
 
         ShowLists (Err err) ->
             { model | error = toString err } ! []

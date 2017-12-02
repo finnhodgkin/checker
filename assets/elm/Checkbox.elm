@@ -19,7 +19,6 @@ checkboxes model =
     in
     div [ class "checkboxes" ]
         [ checkboxes
-        , createCheckbox model.create
         , checkboxError model.error
         ]
 
@@ -30,8 +29,8 @@ checkIcon checkbox =
         Html.i [ class "material-icons button--rounded button--grey button--right-pad" ] [ text "cloud_off" ]
     else if checkbox.checked then
         div [ class "checkbox__control" ]
-            [ div [ class "button-background button-on-animation" ]
-                []
+            [ Html.i [ class "material-icons button-background button--on-animation" ]
+                [ text "close" ]
             , Html.i
                 [ class "material-icons button--rounded button--right-pad" ]
                 [ text "done" ]
@@ -77,17 +76,17 @@ editing checkbox =
 editingButton : Checkbox -> Html Msg
 editingButton checkbox =
     if checkbox.editing then
-        Html.i [ onClick (SaveCheckbox checkbox.id checkbox.editString), class "material-icons button--rounded button--pad" ] [ text "done" ]
+        Html.i [ onClick (SaveCheckbox checkbox.id checkbox.editString), class "material-icons button--rounded button--pad button_checkbox" ] [ text "done" ]
     else
-        Html.i [ onClick (SetEdit checkbox.id checkbox.description True), class "material-icons button--rounded button--pad" ] [ text "edit" ]
+        Html.i [ onClick (SetEdit checkbox.id checkbox.description True), class "material-icons button--rounded button--pad button_checkbox" ] [ text "edit" ]
 
 
 rightButton : Checkbox -> Html Msg
 rightButton checkbox =
     if checkbox.editing then
-        Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "close" ]
+        Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded button_checkbox" ] [ text "close" ]
     else
-        Html.i [ onClick (DeleteCheckbox checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "delete_forever" ]
+        Html.i [ onClick (DeleteCheckbox checkbox.id checkbox.description), class "material-icons button--rounded button_checkbox" ] [ text "delete_forever" ]
 
 
 checkbox : Checkbox -> Html Msg
@@ -107,31 +106,6 @@ checkbox checkbox =
         , editing checkbox
         , editingButton checkbox
         , rightButton checkbox
-        ]
-
-
-createCheckbox : String -> Html Msg
-createCheckbox create =
-    let
-        submit =
-            if create == "" then
-                Focus "create"
-            else
-                CreateCheckbox
-    in
-    Html.form [ onSubmit submit, class "create-checkbox" ]
-        [ input
-            [ type_ "text"
-            , onInput UpdateCreate
-            , id "create"
-            , class "create-checkbox__input"
-            , value create
-            , autocomplete False
-            ]
-            []
-        , Html.i [ onClick submit, class "material-icons button--rounded button--left-pad" ] [ text "add" ]
-        , label [ class "visually-hidden" ]
-            [ text "Add a checkbox" ]
         ]
 
 

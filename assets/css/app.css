@@ -9,6 +9,14 @@ body,
   height: 100%;
 }
 
+.material-icons {
+  user-select: none;
+}
+
+.translateY-100 {
+  transform: translateX(100%);
+}
+
 .login {
   height: 100%;
   display: flex;
@@ -35,6 +43,17 @@ body,
 .logout {
   font-size: 2.4rem;
   margin-right: 0.8rem;
+}
+
+.checklist-item {
+  color: palevioletred;
+  font-size: 1.2rem;
+  padding: 1rem;
+  border-bottom: 1px solid palevioletred;
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
 }
 
 .back-button {
@@ -134,34 +153,89 @@ body,
   color: white;
   cursor: pointer;
   text-align: center;
+  z-index: 1;
+  position: relative;
 }
 
 .button-background {
   font-size: 1.3rem;
   border-radius: 50%;
   padding: 0.65rem;
+  position: absolute;
+  background-color: rgb(209, 209, 209);
+  z-index: 0;
+  opacity: 1;
+  color: palevioletred;
 }
 
 .button--on-animation {
   animation-name: switch;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-in;
+}
+
+.button_checkbox {
+  animation-name: button-anim;
   animation-duration: 0.3s;
   animation-timing-function: ease-in;
+}
+
+.fade_in {
+  animation-name: fade-in;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
 }
 
 @keyframes switch {
   0% {
     transform: scale(1);
+    opacity: 1;
   }
   70% {
-    transform: scale(1.2);
+    transform: scale(1.4);
+    opacity: 0.3;
+  }
+  99% {
+    transform: scale(1.8);
   }
   100% {
     transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes button-anim {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(0.3);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
 .button--grey {
   background-color: rgb(184, 184, 184);
+}
+
+.overflow-none {
+  overflow: hidden;
+  max-width: 40rem;
+  margin: 0 auto;
 }
 
 .button--empty {
@@ -193,7 +267,7 @@ body,
 
 .checkbox:last-child {
   border-bottom: none;
-  margin-bottom: 3.5rem;
+  margin-bottom: 4rem;
 }
 
 .checkbox--text {
@@ -212,7 +286,7 @@ body,
 
 .checkbox--input {
   width: 100%;
-  padding: 0.75rem 0.5rem;
+  padding: 0.65rem 0.5rem;
   font-size: 1rem;
   color: palevioletred;
   border: 1px solid palevioletred;
@@ -224,6 +298,11 @@ body,
   font-size: 1rem;
   color: palevioletred;
   border: none;
+  border-bottom: none;
+  outline: none;
+}
+
+.create-checkbox__input:focus {
   border-bottom: 1px palevioletred solid;
 }
 
@@ -238,6 +317,7 @@ body,
   margin: 0 auto;
   padding: 0.5rem;
   box-sizing: border-box;
+  transition: all ease 0.3s;
 }
 
 .create-checkbox {
@@ -252,4 +332,6 @@ body,
   width: 100%;
   box-sizing: border-box;
   background-color: papayawhip;
+  z-index: 1;
+  border-top: 1px solid #cfc1aa;
 }

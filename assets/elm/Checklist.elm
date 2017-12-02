@@ -10,6 +10,15 @@ import Types exposing (..)
 
 checklists : Model -> Html Msg
 checklists model =
+    let
+        lists =
+            case model.checklists of
+                [] ->
+                    div [ class "checkbox-error" ] [ text "No checklists found" ]
+
+                _ ->
+                    div [] (List.map checklistView model.checklists)
+    in
     div []
         [ header [ class "checklist-header" ]
             [ section [ class "checklist-header__wrap" ]
@@ -19,7 +28,7 @@ checklists model =
                 , Html.i [ class "material-icons logout", onClick Logout ] [ text "person_outline" ]
                 ]
             ]
-        , section [ class "mobile-container" ] [ div [] (List.map checklistView model.checklists) ]
+        , section [ class "mobile-container" ] [ lists ]
         , createCheckbox model.createChecklist
         ]
 
@@ -49,5 +58,6 @@ createCheckbox create =
         ]
 
 
+checklistView : Checklist -> Html Msg
 checklistView checklist =
-    button [ onClick (SetList checklist) ] [ text checklist.title ]
+    section [ class "checklist-item", onClick (SetList checklist) ] [ text checklist.title ]
