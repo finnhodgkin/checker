@@ -7,6 +7,7 @@ defmodule Checker.Checklists.Checklist do
   schema "checklists" do
     field :title, :string
     has_many :checkbox, Checker.Checkboxes.Checkbox
+    belongs_to :user, Checker.Accounts.User
 
     timestamps()
   end
@@ -14,7 +15,7 @@ defmodule Checker.Checklists.Checklist do
   @doc false
   def changeset(%Checklist{} = checklist, attrs) do
     checklist
-    |> cast(attrs, [:title])
-    |> validate_required([:title])
+    |> cast(attrs, [:title, :user_id])
+    |> validate_required([:title, :user_id])
   end
 end

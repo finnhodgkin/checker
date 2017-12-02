@@ -10,6 +10,10 @@ defmodule CheckerWeb.CheckboxView do
     %{data: render_one(checkbox, CheckboxView, "checkbox.json")}
   end
 
+  def render("nothing.json", _nothing) do
+    %{error: "nothing"}
+  end
+
   def render("checkbox.json", %{checkbox: checkbox}) do
     %{id: checkbox.id,
       description: checkbox.description,

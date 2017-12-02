@@ -2,6 +2,7 @@ module Page exposing (content)
 
 import Authentication exposing (authenticateView)
 import Checkbox exposing (..)
+import Checklist exposing (checklists)
 import Html exposing (..)
 import Html.Attributes exposing (class, id, type_, value)
 import Html.Events exposing (..)
@@ -28,15 +29,20 @@ inputTitle checklist =
 
 backButton : Html Msg
 backButton =
-    Html.i [ class "material-icons back-button" ] [ text "chevron_left" ]
+    Html.i [ class "material-icons back-button", onClick ResetChecklist ] [ text "chevron_left" ]
+
+
+deleteTitle : Html Msg
+deleteTitle =
+    Html.i [ class "material-icons back-button", onMouseDown DeleteChecklist ] [ text "delete_forever" ]
 
 
 content : Model -> Html Msg
 content model =
     if model.auth.token == "" then
         authenticateView model
-    else if model.checklist.id /= 0 then
-        checklist model
+    else if model.checklist.id == 0 then
+        checklists model
     else
         Html.main_ []
             [ header [ class "checklist-header" ]
@@ -44,6 +50,7 @@ content model =
                     [ backButton
                     , inputTitle model.checklist
                     , editTitle model.checklist
+                    , deleteTitle
                     ]
                 ]
             , section [ class "mobile-container" ] [ checkboxes model ]

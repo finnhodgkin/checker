@@ -13,6 +13,7 @@ defmodule CheckerWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug CheckerWeb.Plugs.Auth
   end
 
   scope "/", CheckerWeb do
@@ -34,5 +35,6 @@ defmodule CheckerWeb.Router do
 
     resources "/checkboxes", CheckboxController, except: [:new, :edit]
     resources "/checklists", ChecklistController, except: [:new, :edit]
+    get "/checklists", ChecklistController, :nothing
   end
 end

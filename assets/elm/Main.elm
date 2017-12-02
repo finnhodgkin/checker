@@ -23,10 +23,18 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] ! [ getLists token ]
+            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] "" Unloaded ! [ getLists token ]
 
         Nothing ->
-            Model [] "" "" (Checklist "" 0 False "") (Auth "") [] ! []
+            Model []
+                ""
+                ""
+                (Checklist "" 0 False "")
+                (Auth "")
+                []
+                ""
+                Unloaded
+                ! []
 
 
 toggleChecked : Int -> List Checkbox -> List Checkbox
@@ -138,7 +146,7 @@ update msg model =
     case msg of
         Check toggleId ->
             { model | checks = toggleChecked toggleId model.checks }
-                ! [ checkToggle toggleId (isChecked toggleId model.checks) ]
+                ! [ checkToggle model.auth.token toggleId (isChecked toggleId model.checks) ]
 
         UpdateCheckboxDatabase (Ok checkbox) ->
             { model | checks = updateFromDatabase checkbox model.checks } ! []
@@ -166,7 +174,7 @@ update msg model =
                 save =
                     case findCheckbox id model.checks of
                         Just checkbox ->
-                            updateCheckbox { checkbox | description = description }
+                            updateCheckbox model.auth.token { checkbox | description = description }
 
                         Nothing ->
                             noOpArg
@@ -174,7 +182,7 @@ update msg model =
             { model | checks = saveEdit id description model.checks } ! [ save id ]
 
         DeleteCheckbox id description ->
-            { model | checks = save id model.checks False } ! [ deleteCheckboxRequest id ]
+            { model | checks = save id model.checks False } ! [ deleteCheckboxRequest model.auth.token id ]
 
         DeleteCheckboxDatabase id (Ok checkbox) ->
             let
@@ -202,7 +210,7 @@ update msg model =
                     Checkbox model.create False id False False ""
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
-                ! [ createCheckboxRequest id model.create model.checklist.id, focusElement "create" ]
+                ! [ createCheckboxRequest model.auth.token id model.create model.checklist.id, focusElement "create" ]
 
         CreateCheckboxDatabase id (Ok checkbox) ->
             { model
@@ -222,6 +230,27 @@ update msg model =
                 Ok () ->
                     model ! []
 
+        CreateChecklist ->
+            { model | createChecklist = "", checklist = Checklist model.createChecklist 1 False "", savedChecklist = Unsaved } ! [ createChecklist model.auth.token model.createChecklist ]
+
+        CreateChecklistDatabase (Ok checklist) ->
+            { model
+                | checklist =
+                    checklist
+                , checklists = model.checklists ++ [ checklist ]
+                , savedChecklist = Saved
+            }
+                ! []
+
+        CreateChecklistDatabase (Err err) ->
+            { model | error = toString err } ! []
+
+        UpdateCreateChecklist listName ->
+            { model | createChecklist = listName } ! []
+
+        SetList checklist ->
+            { model | checklist = checklist } ! [ fetchInitialData model.auth.token checklist.id ]
+
         EditChecklist ->
             let
                 checklist : Checklist -> Checklist
@@ -237,13 +266,17 @@ update msg model =
             in
             { model | checklist = checklist model.checklist } ! []
 
+        DeleteChecklist ->
+            model ! [ deleteChecklist model ]
+
+        DeleteChecklistDatabase (Ok checklist) ->
+            { model | checklist = Checklist "" 0 False "", checks = [] } ! []
+
+        DeleteChecklistDatabase (Err err) ->
+            { model | error = toString err } ! []
+
         ResetChecklist ->
-            let
-                checklist : Checklist -> Checklist
-                checklist list =
-                    { list | editString = "", editing = False }
-            in
-            { model | checklist = checklist model.checklist } ! []
+            { model | checklist = Checklist "" 0 False "", checks = [] } ! []
 
         SetChecklist ->
             let
@@ -252,7 +285,7 @@ update msg model =
 
                 update =
                     if model.checklist.editString /= "" then
-                        updateChecklist model.checklist
+                        updateChecklist model.auth.token model.checklist
                     else
                         Cmd.none
             in

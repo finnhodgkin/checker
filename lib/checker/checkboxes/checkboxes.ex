@@ -20,7 +20,7 @@ defmodule Checker.Checkboxes do
   def list_checkboxes(id) do
     query = from cb in Checkbox,
             join: cl in assoc(cb, :checklist),
-            where: cl.id == ^id
+            where: cb.checklist_id == ^id
 
     Repo.all(query)
   end

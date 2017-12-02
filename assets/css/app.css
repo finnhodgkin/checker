@@ -3,11 +3,28 @@ body {
   background-color: papayawhip;
 }
 
+.logout {
+  font-size: 2.4rem;
+  margin-right: 0.8rem;
+}
+
 .back-button {
   font-size: 2.4rem;
   padding-top: 0rem;
   color: white;
   cursor: pointer;
+}
+
+.checkbox-error {
+  margin-top: 2rem;
+  color: palevioletred;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.checketlist-header__title--centered {
+  text-align: center;
+  margin-left: 3rem;
 }
 
 .checklist-header {

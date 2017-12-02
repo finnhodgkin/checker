@@ -10,8 +10,15 @@ import Types exposing (..)
 
 checkboxes : Model -> Html Msg
 checkboxes model =
+    let
+        checkboxes =
+            if model.checks == [] then
+                div [ class "checkbox-error" ] [ text "No checkboxes found" ]
+            else
+                div [] (List.map checkbox (List.sortBy .description model.checks))
+    in
     div [ class "checkboxes" ]
-        [ div [] (List.map checkbox (List.sortBy .description model.checks))
+        [ checkboxes
         , createCheckbox model.create
         , checkboxError model.error
         ]

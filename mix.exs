@@ -43,7 +43,8 @@ defmodule Checker.Mixfile do
       {:cowboy, "~> 1.0"},
       {:ueberauth, "~> 0.4"},
       {:envy, "~> 1.1.1"},
-      {:ueberauth_facebook, "~> 0.7"}
+      {:ueberauth_facebook, "~> 0.7"},
+      {:guardian, "~> 1.0"}
     ]
   end
 

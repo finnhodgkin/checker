@@ -17,8 +17,12 @@ defmodule Checker.Checklists do
       [%Checklist{}, ...]
 
   """
-  def list_checklists do
-    Repo.all(Checklist)
+  def list_checklists(id) do
+    query = from c in Checklist,
+    join: u in assoc(c, :user),
+    where: c.user_id == ^id
+
+    Repo.all(query)
   end
 
   @doc """

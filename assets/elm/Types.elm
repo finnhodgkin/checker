@@ -11,7 +11,15 @@ type alias Model =
     , checklist : Checklist
     , auth : Auth
     , checklists : List Checklist
+    , createChecklist : String
+    , savedChecklist : Status
     }
+
+
+type Status
+    = Saved
+    | Unsaved
+    | Unloaded
 
 
 type alias Checkbox =
@@ -51,8 +59,14 @@ type Msg
     | CreateCheckbox
     | CreateCheckboxDatabase Int (Result Http.Error Checkbox)
     | FocusCreate (Result Dom.Error ())
+    | CreateChecklist
+    | CreateChecklistDatabase (Result Http.Error Checklist)
+    | UpdateCreateChecklist String
+    | SetList Checklist
     | EditChecklist
     | UpdateChecklist String
+    | DeleteChecklist
+    | DeleteChecklistDatabase (Result Http.Error String)
     | SetChecklist
     | ResetChecklist
     | ShowLists (Result Http.Error (List Checklist))

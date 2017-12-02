@@ -10,6 +10,10 @@ defmodule CheckerWeb.ChecklistView do
     %{data: render_one(checklist, ChecklistView, "checklist.json")}
   end
 
+  def render("nothing.json", _nothing) do
+    %{error: "nothing"}
+  end
+
   def render("checklist.json", %{checklist: checklist}) do
     %{id: checklist.id,
       title: checklist.title,
