@@ -3,6 +3,35 @@ body {
   background-color: papayawhip;
 }
 
+html,
+body,
+#elm-container {
+  height: 100%;
+}
+
+.login {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login__button {
+  margin-bottom: 4rem;
+  text-decoration: none;
+  color: palevioletred;
+  font-weight: 600;
+  font-size: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.login__title {
+  margin-top: 1.2rem;
+}
+
 .logout {
   font-size: 2.4rem;
   margin-right: 0.8rem;
@@ -93,14 +122,42 @@ body {
   cursor: pointer;
 }
 
+.checkbox__control {
+  position: relative;
+}
+
 .button--rounded {
   border-radius: 50%;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   padding: 0.65rem;
   background-color: palevioletred;
   color: white;
   cursor: pointer;
   text-align: center;
+}
+
+.button-background {
+  font-size: 1.3rem;
+  border-radius: 50%;
+  padding: 0.65rem;
+}
+
+.button--on-animation {
+  animation-name: switch;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-in;
+}
+
+@keyframes switch {
+  0% {
+    transform: scale(1);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .button--grey {

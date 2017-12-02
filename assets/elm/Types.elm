@@ -22,6 +22,12 @@ type Status
     | Unloaded
 
 
+type Editing
+    = Editing String
+    | Failed String
+    | Set
+
+
 type alias Checkbox =
     { description : String
     , checked : Bool
@@ -66,10 +72,11 @@ type Msg
     | EditChecklist
     | UpdateChecklist String
     | DeleteChecklist
-    | DeleteChecklistDatabase (Result Http.Error String)
+    | DeleteChecklistDatabase Int (Result Http.Error String)
     | SetChecklist
     | ResetChecklist
     | ShowLists (Result Http.Error (List Checklist))
     | UpdateChecklistDatabase (Result Http.Error Checklist)
+    | Logout
     | Focus String
     | NoOp

@@ -1,15 +1,34 @@
 module Authentication exposing (..)
 
 import Html exposing (..)
-import Html.Attributes as HA exposing (..)
-import Html.Events exposing (..)
-import Http exposing (..)
-import Json.Decode as Decode exposing (Decoder, bool, dict, field, int, string)
-import Json.Encode as JE exposing (Value, bool, int)
+import Html.Attributes exposing (class, href)
+import Svg exposing (path, svg)
+import Svg.Attributes exposing (d, fill, height, viewBox, width)
 import Types exposing (..)
 
 
 authenticateView : Model -> Html Msg
 authenticateView model =
-    a [ href "https://www.facebook.com/v2.11/dialog/oauth?client_id=1639208492813532&redirect_uri=http://localhost:4000/auth/facebook/callback" ]
-        [ text "Log in with facebook" ]
+    let
+        pathOne =
+            "M248.082,262.307c7.854,0,14.223-6.369,14.223-14.225V18.812"
+                ++ "c0-7.857-6.368-14.224-14.223-14.224H18.812c-7.857,0-14.224,"
+                ++ "6.367-14.224,14.224v229.27c0,7.855,6.366,14.225,14.224,"
+                ++ "14.225 H248.082z"
+
+        pathTwo =
+            "M182.409,262.307v-99.803h33.499l5.016-38.895h-38.515V98."
+                ++ "777c0-11.261,3.127-18.935,19.275-18.935 l20.596-0.009V45."
+                ++ "045c-3.562-0.474-15.788-1.533-30.012-1.533c-29.695,"
+                ++ "0-50.025,18.126-50.025,51.413v28.684h-33.585v38.895h33.585"
+                ++ "v99.803H182.409z"
+    in
+    main_ [ class "login" ]
+        [ a [ class "login__button", href "https://www.facebook.com/v2.11/dialog/oauth?client_id=1639208492813532&redirect_uri=http://localhost:4000/auth/facebook/callback" ]
+            [ svg [ width "10rem", height "10rem", viewBox "0 0 266.895 266.895" ]
+                [ path [ fill "#3C5A99", d pathOne ] []
+                , path [ fill "white", d pathTwo ] []
+                ]
+            , h1 [ class "login__title" ] [ text "Log in with Facebook" ]
+            ]
+        ]

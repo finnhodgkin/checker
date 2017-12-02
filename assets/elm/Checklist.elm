@@ -16,7 +16,7 @@ checklists model =
                 [ h1
                     [ class "checklist-header__title checketlist-header__title--centered" ]
                     [ text "Your checklists" ]
-                , Html.i [ class "material-icons logout" ] [ text "person_outline" ]
+                , Html.i [ class "material-icons logout", onClick Logout ] [ text "person_outline" ]
                 ]
             ]
         , section [ class "mobile-container" ] [ div [] (List.map checklistView model.checklists) ]

@@ -269,10 +269,14 @@ update msg model =
         DeleteChecklist ->
             model ! [ deleteChecklist model ]
 
-        DeleteChecklistDatabase (Ok checklist) ->
-            { model | checklist = Checklist "" 0 False "", checks = [] } ! []
+        DeleteChecklistDatabase id (Ok checklist) ->
+            let
+                delete check =
+                    not (check.id == id)
+            in
+            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 False "" } ! []
 
-        DeleteChecklistDatabase (Err err) ->
+        DeleteChecklistDatabase id (Err err) ->
             { model | error = toString err } ! []
 
         ResetChecklist ->
@@ -302,6 +306,9 @@ update msg model =
 
         ShowLists (Err err) ->
             { model | error = toString err } ! []
+
+        Logout ->
+            { model | auth = Auth "" } ! []
 
         Focus elementId ->
             model ! [ focusElement elementId ]

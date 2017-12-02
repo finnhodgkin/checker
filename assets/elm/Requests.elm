@@ -231,7 +231,7 @@ deleteChecklist model =
                 , withCredentials = False
                 }
     in
-    Http.send DeleteChecklistDatabase listRequest
+    Http.send (DeleteChecklistDatabase model.checklist.id) listRequest
 
 
 

@@ -29,7 +29,13 @@ checkIcon checkbox =
     if not checkbox.saved then
         Html.i [ class "material-icons button--rounded button--grey button--right-pad" ] [ text "cloud_off" ]
     else if checkbox.checked then
-        Html.i [ class "material-icons button--rounded button--right-pad" ] [ text "done" ]
+        div [ class "checkbox__control" ]
+            [ div [ class "button-background button-on-animation" ]
+                []
+            , Html.i
+                [ class "material-icons button--rounded button--right-pad" ]
+                [ text "done" ]
+            ]
     else
         Html.i [ class "material-icons button--rounded button--empty button--right-pad" ] [ text "close" ]
 
