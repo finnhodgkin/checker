@@ -153,7 +153,7 @@ updateCheckbox token checkbox id =
                 , withCredentials = False
                 }
     in
-    Http.send UpdateCheckboxDatabase request
+    Http.send (UpdateCheckboxDatabase checkbox) request
 
 
 checkToggle : String -> Int -> Bool -> Cmd Msg
@@ -178,8 +178,11 @@ checkToggle token id checked =
                 , timeout = Nothing
                 , withCredentials = False
                 }
+
+        checkbox =
+            Checkbox "" False id Saved Set NoAnimation
     in
-    Http.send UpdateCheckboxDatabase request
+    Http.send (UpdateCheckboxDatabase checkbox) request
 
 
 updateChecklist : String -> Checklist -> Cmd Msg
@@ -188,8 +191,19 @@ updateChecklist token list =
         url =
             "/checklists/" ++ toString list.id
 
+        description =
+            case list.editing of
+                Editing str ->
+                    str
+
+                Failed str ->
+                    ""
+
+                Set ->
+                    ""
+
         body =
-            Http.jsonBody <| encodeList list.editString
+            Http.jsonBody <| encodeList description
 
         expectedChecklist =
             Http.expectJson (Decode.at [ "data" ] listDecoder)
@@ -205,7 +219,10 @@ updateChecklist token list =
                 , withCredentials = False
                 }
     in
-    Http.send UpdateChecklistDatabase listRequest
+    if description == "" then
+        Cmd.none
+    else
+        Http.send UpdateChecklistDatabase listRequest
 
 
 deleteChecklist : Model -> Cmd Msg
@@ -299,11 +316,11 @@ listChecklistDecoder =
 
 checklistDecoder : Decoder Checklist
 checklistDecoder =
-    Decode.map4 Checklist
+    Decode.map3
+        Checklist
         (field "title" Decode.string)
         (field "id" Decode.int)
-        (field "editing" Decode.bool)
-        (field "editString" Decode.string)
+        (field "editing" Decode.string |> setSucceed Set)
 
 
 listCheckboxesDecoder : Decoder (List Checkbox)
@@ -311,22 +328,40 @@ listCheckboxesDecoder =
     Decode.at [ "data" ] (Decode.list checkboxDecoder)
 
 
+setSucceed : a -> Decoder b -> Decoder a
+setSucceed value =
+    Decode.andThen (\_ -> Decode.succeed value)
+
+
 checkboxDecoder : Decoder Checkbox
 checkboxDecoder =
+    let
+        animate string =
+            case string of
+                "create" ->
+                    Create
+
+                "delete" ->
+                    Delete
+
+                _ ->
+                    NoAnimation
+    in
     Decode.map6 Checkbox
         (field "description" Decode.string)
         (field "checked" Decode.bool)
         (field "id" Decode.int)
-        (field "saved" Decode.bool)
-        (field "editing" Decode.bool)
-        (field "editString" Decode.string)
+        (field "saved" Decode.bool |> setSucceed Saved)
+        (field "editing" Decode.bool |> setSucceed Set)
+        (field "animate" Decode.string
+            |> Decode.andThen (\str -> Decode.succeed (animate str))
+        )
 
 
 listDecoder : Decoder Checklist
 listDecoder =
-    Decode.map4
+    Decode.map3
         Checklist
         (field "title" Decode.string)
         (field "id" Decode.int)
-        (field "editing" Decode.bool)
-        (field "editString" Decode.string)
+        (field "editing" Decode.string |> Decode.andThen (\str -> Decode.succeed Set))

@@ -14,7 +14,28 @@ type alias Model =
     , createChecklist : String
     , savedChecklist : Status
     , checkboxLoaded : Load
+    , failedPosts : List Failure
     }
+
+
+type Failure
+    = CheckboxFailure CheckUpdate
+    | ChecklistFailure ChecklistUpdate
+
+
+type alias CheckUpdate =
+    { description : Maybe String, id : Int, listId : Int, command : Request }
+
+
+type alias ChecklistUpdate =
+    { title : Maybe String, id : Int, command : Request }
+
+
+type Request
+    = DELETE
+    | CREATE
+    | EDIT
+    | SAVE
 
 
 type Load
@@ -35,21 +56,26 @@ type Editing
     | Set
 
 
+type Animate
+    = Create
+    | Delete
+    | NoAnimation
+
+
 type alias Checkbox =
     { description : String
     , checked : Bool
     , id : Int
-    , saved : Bool
-    , editing : Bool
-    , editString : String
+    , saved : Status
+    , editing : Editing
+    , animate : Animate
     }
 
 
 type alias Checklist =
     { title : String
     , id : Int
-    , editing : Bool
-    , editString : String
+    , editing : Editing
     }
 
 
@@ -67,7 +93,7 @@ type Msg
     | CancelEdit Int String
     | UpdateCheckbox Int String
     | SaveCheckbox Int String
-    | UpdateCheckboxDatabase (Result Http.Error Checkbox)
+    | UpdateCheckboxDatabase Checkbox (Result Http.Error Checkbox)
     | UpdateCreate String
     | CreateCheckbox
     | CreateCheckboxDatabase Int (Result Http.Error Checkbox)
@@ -85,5 +111,6 @@ type Msg
     | ShowLists (Result Http.Error (List Checklist))
     | UpdateChecklistDatabase (Result Http.Error Checklist)
     | Logout
+    | ClearAnimation Int
     | Focus String
     | NoOp

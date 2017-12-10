@@ -17,7 +17,6 @@ defmodule CheckerWeb.ChecklistView do
   def render("checklist.json", %{checklist: checklist}) do
     %{id: checklist.id,
       title: checklist.title,
-      editing: false,
-      editString: ""}
+      editing: "nil"}
   end
 end

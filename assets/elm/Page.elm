@@ -2,7 +2,7 @@ module Page exposing (content)
 
 import Authentication exposing (authenticateView)
 import Checkbox exposing (..)
-import Checklist exposing (checklists)
+import Checklist exposing (checklists, getEditString)
 import Html exposing (..)
 import Html.Attributes exposing (autocomplete, class, id, type_, value)
 import Html.Events exposing (..)
@@ -11,20 +11,24 @@ import Types exposing (..)
 
 editTitle : Checklist -> Html Msg
 editTitle checklist =
-    if checklist.editing then
-        div [] []
-    else
-        Html.i [ class "material-icons checklist-header__button fade_in", onClick EditChecklist ] [ text "edit" ]
+    case getEditString checklist.editing of
+        Just str ->
+            div [] []
+
+        Nothing ->
+            Html.i [ class "material-icons checklist-header__button fade_in", onClick EditChecklist ] [ text "edit" ]
 
 
 inputTitle : Checklist -> Html Msg
 inputTitle checklist =
-    if checklist.editing then
-        Html.form [ class "checklist-header__form", onSubmit SetChecklist ]
-            [ input [ type_ "text", id "title-input", onInput UpdateChecklist, onBlur SetChecklist, class "checklist-header__input", value checklist.editString ] []
-            ]
-    else
-        h1 [ class "checklist-header__title" ] [ text checklist.title ]
+    case getEditString checklist.editing of
+        Just str ->
+            Html.form [ class "checklist-header__form", onSubmit SetChecklist ]
+                [ input [ type_ "text", id "title-input", onInput UpdateChecklist, onBlur SetChecklist, class "checklist-header__input", value str ] []
+                ]
+
+        Nothing ->
+            h1 [ class "checklist-header__title" ] [ text checklist.title ]
 
 
 backButton : Html Msg

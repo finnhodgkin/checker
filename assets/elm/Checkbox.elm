@@ -4,6 +4,7 @@ import Dom exposing (..)
 import Html exposing (..)
 import Html.Attributes as HA exposing (..)
 import Html.Events exposing (..)
+import Json.Decode exposing (oneOf, succeed)
 import Task exposing (..)
 import Types exposing (..)
 
@@ -12,7 +13,7 @@ checkboxes : Model -> Html Msg
 checkboxes model =
     let
         checkboxes =
-            if model.checks == [] then
+            if List.length model.checks == 0 then
                 div [ class "checkbox-error" ] [ text "No checkboxes found" ]
             else
                 div [] (List.map checkbox (List.sortBy .description model.checks))
@@ -25,68 +26,97 @@ checkboxes model =
 
 checkIcon : Checkbox -> Html Msg
 checkIcon checkbox =
-    if not checkbox.saved then
-        Html.i [ class "material-icons button--rounded button--grey button--right-pad" ] [ text "cloud_off" ]
-    else if checkbox.checked then
-        div [ class "checkbox__control" ]
-            [ Html.i [ class "material-icons button-background button--on-animation" ]
-                [ text "close" ]
-            , Html.i
-                [ class "material-icons button--rounded button--right-pad" ]
-                [ text "done" ]
-            ]
-    else
-        Html.i [ class "material-icons button--rounded button--empty button--right-pad" ] [ text "close" ]
+    case checkbox.saved of
+        Saved ->
+            if checkbox.checked then
+                div [ class "checkbox__control" ]
+                    [ Html.i [ class "material-icons button-background button--on-animation" ]
+                        [ text "close" ]
+                    , Html.i
+                        [ class "material-icons button--rounded button--right-pad" ]
+                        [ text "done" ]
+                    ]
+            else
+                Html.i [ class "material-icons button--rounded button--empty button--right-pad" ] [ text "close" ]
+
+        _ ->
+            Html.i [ class "material-icons button--rounded button--grey button--right-pad" ] [ text "cloud_off" ]
 
 
-savedClass : Bool -> String
+savedClass : Status -> String
 savedClass saved =
-    if saved then
-        "saved"
-    else
-        "unsaved"
+    case saved of
+        Saved ->
+            "saved"
+
+        _ ->
+            "unsaved"
 
 
-updateOnSubmit : Checkbox -> Attribute Msg
-updateOnSubmit checkbox =
-    if checkbox.editString == "" then
-        onSubmit (DeleteCheckbox checkbox.id checkbox.description)
-    else
-        onSubmit (SaveCheckbox checkbox.id checkbox.editString)
+saveOrDelete : Checkbox -> String -> Msg
+saveOrDelete checkbox editString =
+    case editString of
+        "" ->
+            DeleteCheckbox checkbox.id checkbox.description
+
+        string ->
+            SaveCheckbox checkbox.id string
 
 
 editing : Checkbox -> Html Msg
 editing checkbox =
-    if checkbox.editing then
-        Html.form [ updateOnSubmit checkbox, class "checkbox--form" ]
-            [ input
-                [ class "checkbox--text checkbox--input"
-                , id (toString checkbox.id)
-                , type_ "text"
-                , value checkbox.editString
-                , onInput (UpdateCheckbox checkbox.id)
-                , autocomplete False
+    case checkbox.editing of
+        Editing string ->
+            Html.form [ onSubmit (saveOrDelete checkbox string), class "checkbox--form" ]
+                [ input
+                    [ class "checkbox--text checkbox--input"
+                    , id (toString checkbox.id)
+                    , type_ "text"
+                    , value string
+                    , onInput (UpdateCheckbox checkbox.id)
+                    , autocomplete False
+                    ]
+                    []
                 ]
-                []
-            ]
-    else
-        div [ class "checkbox--text" ] [ text checkbox.description ]
+
+        _ ->
+            div [ class "checkbox--text" ] [ text checkbox.description ]
+
+
+captureAnimEnd : Int -> List (Attribute Msg)
+captureAnimEnd id =
+    List.map (\ae -> on ae (Json.Decode.succeed (ClearAnimation id)))
+        [ "webkitAnimationEnd", "oanimationend", "msAnimationEnd", "animationend" ]
+
+
+buttonAnimation : Animate -> String
+buttonAnimation animate =
+    case animate of
+        Create ->
+            " button_checkbox"
+
+        _ ->
+            ""
 
 
 editingButton : Checkbox -> Html Msg
 editingButton checkbox =
-    if checkbox.editing then
-        Html.i [ onClick (SaveCheckbox checkbox.id checkbox.editString), class "material-icons button--rounded button--pad button_checkbox" ] [ text "done" ]
-    else
-        Html.i [ onClick (SetEdit checkbox.id checkbox.description True), class "material-icons button--rounded button--pad button_checkbox" ] [ text "edit" ]
+    case checkbox.editing of
+        Editing string ->
+            Html.i [ onClick (saveOrDelete checkbox string), class "material-icons button--rounded button--pad" ] [ text "done" ]
+
+        _ ->
+            Html.i (captureAnimEnd checkbox.id ++ [ onClick (SetEdit checkbox.id checkbox.description True), class ("material-icons button--rounded button--pad" ++ buttonAnimation checkbox.animate) ]) [ text "edit" ]
 
 
 rightButton : Checkbox -> Html Msg
 rightButton checkbox =
-    if checkbox.editing then
-        Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded button_checkbox" ] [ text "close" ]
-    else
-        Html.i [ onClick (DeleteCheckbox checkbox.id checkbox.description), class "material-icons button--rounded button_checkbox" ] [ text "delete_forever" ]
+    case checkbox.editing of
+        Editing _ ->
+            Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "close" ]
+
+        _ ->
+            Html.i (captureAnimEnd checkbox.id ++ [ onClick (DeleteCheckbox checkbox.id checkbox.description), class ("material-icons button--rounded" ++ buttonAnimation checkbox.animate) ]) [ text "delete_forever" ]
 
 
 checkbox : Checkbox -> Html Msg

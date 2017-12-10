@@ -70,6 +70,11 @@ defmodule CheckerWeb.CheckboxController do
     end
   end
 
+  defp addAnimation(checkbox, animation_name) do
+    checkbox
+    |> Map.put(:animate, animation_name)
+  end
+
   defp checklistOwnership(id, user_id) do
     checklist = Checklists.get_checklist!(id)
 

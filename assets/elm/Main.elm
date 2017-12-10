@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Checkbox exposing (focusElement)
+import Checklist exposing (getEditString)
 import Debug exposing (log)
 import Dom exposing (..)
 import Html exposing (Html)
@@ -23,18 +24,19 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 0 False "") (Auth token) [] "" Unloaded Empty ! [ getLists token ]
+            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] ! [ getLists token ]
 
         Nothing ->
             Model []
                 ""
                 ""
-                (Checklist "" 0 False "")
+                (Checklist "" 0 Set)
                 (Auth "")
                 []
                 ""
                 Unloaded
                 Empty
+                []
                 ! []
 
 
@@ -68,9 +70,15 @@ isChecked id checkboxes =
 setEdit : Int -> String -> Bool -> List Checkbox -> List Checkbox
 setEdit id description setEdit checkboxes =
     let
+        editing =
+            if setEdit then
+                Editing description
+            else
+                Set
+
         edit cb =
             if cb.id == id && cb.description == description then
-                { cb | editing = setEdit, editString = description }
+                { cb | editing = editing }
             else
                 cb
     in
@@ -82,7 +90,7 @@ saveEdit id editString checkboxes =
     let
         edit cb =
             if cb.id == id then
-                { cb | editing = False, editString = "", description = editString }
+                { cb | editing = Set, description = editString }
             else
                 cb
     in
@@ -94,7 +102,7 @@ editCheckbox id newDescription checkboxes =
     let
         edit cb =
             if cb.id == id then
-                { cb | editString = newDescription, saved = False }
+                { cb | editing = Editing newDescription, saved = Unsaved }
             else
                 cb
     in
@@ -106,7 +114,7 @@ updateCheckboxId id description newId checkboxes =
     let
         edit cb =
             if cb.id == id && cb.description == description then
-                { cb | id = newId, saved = True }
+                { cb | id = newId, saved = Saved }
             else
                 cb
     in
@@ -116,11 +124,11 @@ updateCheckboxId id description newId checkboxes =
 save : Int -> List Checkbox -> Bool -> List Checkbox
 save id checkboxes saved =
     let
-        save unSaved =
-            if unSaved.id == id then
-                { unSaved | saved = saved }
+        save checkbox =
+            if checkbox.id == id then
+                { checkbox | saved = Saved }
             else
-                unSaved
+                checkbox
     in
     List.map save checkboxes
 
@@ -149,11 +157,27 @@ update msg model =
             { model | checks = toggleChecked toggleId model.checks }
                 ! [ checkToggle model.auth.token toggleId (isChecked toggleId model.checks) ]
 
-        UpdateCheckboxDatabase (Ok checkbox) ->
+        UpdateCheckboxDatabase _ (Ok checkbox) ->
             { model | checks = updateFromDatabase checkbox model.checks } ! []
 
-        UpdateCheckboxDatabase (Err _) ->
-            { model | error = "Failed to change the checkbox in the cloud" } ! []
+        UpdateCheckboxDatabase check (Err _) ->
+            let
+                description =
+                    case check.description of
+                        "" ->
+                            Nothing
+
+                        description ->
+                            Just description
+
+                failure =
+                    CheckboxFailure (CheckUpdate description check.id model.checklist.id EDIT)
+            in
+            { model
+                | error = "Failed to change the checkbox in the cloud"
+                , failedPosts = addFailure failure model
+            }
+                ! []
 
         GetAll (Ok checkboxes) ->
             { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! []
@@ -175,12 +199,12 @@ update msg model =
                 save =
                     case findCheckbox id model.checks of
                         Just checkbox ->
-                            updateCheckbox model.auth.token { checkbox | description = description }
+                            updateCheckbox model.auth.token { checkbox | description = description } id
 
                         Nothing ->
-                            noOpArg
+                            Cmd.none
             in
-            { model | checks = saveEdit id description model.checks } ! [ save id ]
+            { model | checks = saveEdit id description model.checks } ! [ save ]
 
         DeleteCheckbox id description ->
             { model | checks = save id model.checks False } ! [ deleteCheckboxRequest model.auth.token id ]
@@ -192,12 +216,12 @@ update msg model =
             in
             { model | checks = List.filter delete model.checks } ! []
 
-        DeleteCheckboxDatabase id (Err test) ->
+        DeleteCheckboxDatabase id (Err err) ->
             let
-                hi =
-                    log (toString test)
+                failure =
+                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id DELETE)
             in
-            { model | error = "" } ! []
+            { model | error = "", failedPosts = addFailure failure model } ! []
 
         UpdateCreate toCreate ->
             { model | create = toCreate } ! []
@@ -208,7 +232,7 @@ update msg model =
                     List.length model.checks * -1
 
                 checkbox =
-                    Checkbox model.create False id False False ""
+                    Checkbox model.create False id Unsaved Set Create
             in
             { model | checks = model.checks ++ [ checkbox ], create = "" }
                 ! [ createCheckboxRequest model.auth.token id model.create model.checklist.id, focusElement "create" ]
@@ -220,8 +244,12 @@ update msg model =
             }
                 ! []
 
-        CreateCheckboxDatabase id (Err _) ->
-            { model | error = "Failed to add the checkbox to the cloud" } ! []
+        CreateCheckboxDatabase id (Err err) ->
+            let
+                failure =
+                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id DELETE)
+            in
+            { model | error = "Failed to add the checkbox to the cloud" ++ toString err } ! []
 
         FocusCreate result ->
             case result of
@@ -232,7 +260,7 @@ update msg model =
                     model ! []
 
         CreateChecklist ->
-            { model | createChecklist = "", checklist = Checklist model.createChecklist 1 False "", savedChecklist = Unsaved } ! [ createChecklist model.auth.token model.createChecklist ]
+            { model | createChecklist = "", checklist = Checklist model.createChecklist 1 Set, savedChecklist = Unsaved } ! [ createChecklist model.auth.token model.createChecklist ]
 
         CreateChecklistDatabase (Ok checklist) ->
             { model
@@ -240,6 +268,7 @@ update msg model =
                     checklist
                 , checklists = model.checklists ++ [ checklist ]
                 , savedChecklist = Saved
+                , checkboxLoaded = Loaded
             }
                 ! []
 
@@ -256,14 +285,14 @@ update msg model =
             let
                 checklist : Checklist -> Checklist
                 checklist list =
-                    { list | editing = True, editString = list.title }
+                    { list | editing = Editing list.title }
             in
             { model | checklist = checklist model.checklist } ! [ focusElement "title-input" ]
 
         UpdateChecklist newTitle ->
             let
                 checklist list =
-                    { list | editString = newTitle }
+                    { list | editing = Editing newTitle }
             in
             { model | checklist = checklist model.checklist } ! []
 
@@ -275,26 +304,33 @@ update msg model =
                 delete check =
                     not (check.id == id)
             in
-            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 False "" } ! []
+            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 Set } ! []
 
         DeleteChecklistDatabase id (Err err) ->
             { model | error = toString err } ! []
 
         ResetChecklist ->
-            { model | checklist = Checklist "" 0 False "", checks = [], checkboxLoaded = Empty } ! []
+            { model | checklist = Checklist "" 0 Set, checks = [], checkboxLoaded = Empty } ! []
 
         SetChecklist ->
             let
-                checklist list =
-                    { list | editing = False, editString = "", title = model.checklist.editString }
+                edited list =
+                    case getEditString model.checklist.editing of
+                        Just str ->
+                            { list | editing = Set, title = str }
+
+                        Nothing ->
+                            list
 
                 update =
-                    if model.checklist.editString /= "" then
-                        updateChecklist model.auth.token model.checklist
-                    else
-                        Cmd.none
+                    case getEditString model.checklist.editing of
+                        Just _ ->
+                            updateChecklist model.auth.token model.checklist
+
+                        Nothing ->
+                            Cmd.none
             in
-            { model | checklist = checklist model.checklist } ! [ update ]
+            { model | checklist = edited model.checklist } ! [ update ]
 
         UpdateChecklistDatabase (Ok checklist) ->
             { model | checklist = checklist } ! []
@@ -311,11 +347,134 @@ update msg model =
         Logout ->
             { model | auth = Auth "" } ! []
 
+        ClearAnimation id ->
+            { model | checks = clearCheckboxAnimation id model.checks } ! []
+
         Focus elementId ->
             model ! [ focusElement elementId ]
 
         NoOp ->
             model ! []
+
+
+clearCheckboxAnimation : Int -> List Checkbox -> List Checkbox
+clearCheckboxAnimation id checkboxes =
+    let
+        edit cb =
+            if cb.id == id then
+                { cb | animate = NoAnimation }
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
+addFailure : Failure -> Model -> List Failure
+addFailure failure model =
+    case failure of
+        CheckboxFailure checkboxFailure ->
+            addCheckboxFailure checkboxFailure model
+
+        ChecklistFailure checklistFailure ->
+            addChecklistFailure checklistFailure model
+
+
+addCheckboxFailure : CheckUpdate -> Model -> List Failure
+addCheckboxFailure update model =
+    case update.command of
+        DELETE ->
+            checkboxFailedDelete update model
+
+        CREATE ->
+            List.filter
+                (\post ->
+                    case post of
+                        CheckboxFailure checkbox ->
+                            checkbox.id /= update.id
+
+                        _ ->
+                            True
+                )
+                model.failedPosts
+                ++ [ CheckboxFailure update ]
+
+        EDIT ->
+            List.filter
+                (\post ->
+                    case post of
+                        CheckboxFailure checkbox ->
+                            (checkbox.id /= update.id)
+                                || (checkbox.command /= EDIT)
+
+                        _ ->
+                            True
+                )
+                model.failedPosts
+                ++ [ CheckboxFailure update ]
+
+        SAVE ->
+            model.failedPosts ++ [ CheckboxFailure update ]
+
+
+addChecklistFailure : ChecklistUpdate -> Model -> List Failure
+addChecklistFailure update model =
+    case update.command of
+        DELETE ->
+            List.filter
+                (\post ->
+                    case post of
+                        ChecklistFailure checklist ->
+                            checklist.id /= update.id
+
+                        _ ->
+                            True
+                )
+                model.failedPosts
+                ++ [ ChecklistFailure update ]
+
+        CREATE ->
+            List.filter
+                (\post ->
+                    case post of
+                        ChecklistFailure checklist ->
+                            checklist.id /= update.id && checklist.command /= CREATE
+
+                        _ ->
+                            True
+                )
+                model.failedPosts
+                ++ [ ChecklistFailure update ]
+
+        EDIT ->
+            List.filter
+                (\post ->
+                    case post of
+                        ChecklistFailure checklist ->
+                            (checklist.id /= update.id)
+                                && (checklist.command /= CREATE || checklist.command /= DELETE)
+
+                        _ ->
+                            True
+                )
+                model.failedPosts
+                ++ [ ChecklistFailure update ]
+
+        SAVE ->
+            List.map (\post -> post) model.failedPosts
+
+
+checkboxFailedDelete update model =
+    List.filter
+        (\post ->
+            case post of
+                CheckboxFailure checkbox ->
+                    checkbox.id /= update.id
+
+                _ ->
+                    True
+        )
+        model.failedPosts
+        ++ [ CheckboxFailure update ]
 
 
 view : Model -> Html Msg
