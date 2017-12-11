@@ -1,11 +1,23 @@
-module Checklist exposing (checklists)
+module Checklist exposing (checklists, getEditString)
 
-import Dom exposing (..)
 import Html exposing (..)
 import Html.Attributes as HA exposing (..)
 import Html.Events exposing (..)
-import Task exposing (..)
+import Maybe exposing (..)
 import Types exposing (..)
+
+
+getEditString : Editing -> Maybe String
+getEditString editing =
+    case editing of
+        Editing str ->
+            Just str
+
+        Failed str ->
+            Nothing
+
+        Set ->
+            Nothing
 
 
 checklists : Model -> Html Msg
@@ -29,12 +41,12 @@ checklists model =
                 ]
             ]
         , section [ class "mobile-container" ] [ lists ]
-        , createCheckbox model.createChecklist
+        , createChecklist model.createChecklist
         ]
 
 
-createCheckbox : String -> Html Msg
-createCheckbox create =
+createChecklist : String -> Html Msg
+createChecklist create =
     let
         submit =
             if create == "" then
@@ -52,7 +64,7 @@ createCheckbox create =
             , autocomplete False
             ]
             []
-        , Html.i [ onClick submit, class "material-icons button--rounded button--left-pad" ] [ text "add" ]
+        , Html.i [ onClick submit, class "material-icons button--rounded button--left-pad create-item__button" ] [ text "add" ]
         , label [ class "visually-hidden" ]
             [ text "Add a checkbox" ]
         ]

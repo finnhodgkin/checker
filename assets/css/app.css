@@ -126,6 +126,11 @@ body,
   cursor: pointer;
 }
 
+.create-item__button {
+  font-size: 2rem;
+  padding: 1rem;
+}
+
 .visually-hidden {
   position: absolute;
   overflow: hidden;

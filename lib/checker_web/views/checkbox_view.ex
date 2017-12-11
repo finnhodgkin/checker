@@ -6,6 +6,11 @@ defmodule CheckerWeb.CheckboxView do
     %{data: render_many(checkboxes, CheckboxView, "checkbox.json")}
   end
 
+  def render("show.json", %{checkbox: checkbox, animate: animate}) do
+    checkboxUpdated = Map.put(checkbox, :animate, animate)
+    %{data: render_one(checkboxUpdated, CheckboxView, "checkbox.json")}
+  end
+
   def render("show.json", %{checkbox: checkbox}) do
     %{data: render_one(checkbox, CheckboxView, "checkbox.json")}
   end
@@ -15,13 +20,15 @@ defmodule CheckerWeb.CheckboxView do
   end
 
   def render("checkbox.json", %{checkbox: checkbox}) do
+    animate = Map.get(checkbox, :animate)
+
     %{id: checkbox.id,
       description: checkbox.description,
       checked: checkbox.checked,
       id: checkbox.id,
       saved: true,
-      editing: false,
-      editString: ""
+      editing: true,
+      animate: animate || "noanimation"
     }
   end
 end
