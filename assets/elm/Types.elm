@@ -86,31 +86,31 @@ type alias Auth =
 
 type Msg
     = Check Int
-    | GetAll (Result Http.Error (List Checkbox))
+    | SetEditCheckbox Int String Bool
+    | CancelEditCheckbox Int String
+    | UpdateEditCheckbox Int String
+    | SaveEditCheckbox Int
     | DeleteCheckbox Int String
-    | DeleteCheckboxDatabase Int (Result Http.Error String)
-    | SetEdit Int String Bool
-    | CancelEdit Int String
-    | UpdateCheckbox Int String
-    | SaveCheckbox Int String
-    | UpdateCheckboxDatabase Checkbox (Result Http.Error Checkbox)
-    | UpdateCreate String
+    | UpdateCreateCheckbox String
     | CreateCheckbox
+    | DeleteCheckboxDatabase Int (Result Http.Error String)
+    | UpdateCheckboxDatabase Checkbox (Result Http.Error Checkbox)
+    | GetAllCheckboxes (Result Http.Error (List Checkbox))
     | CreateCheckboxDatabase Int (Result Http.Error Checkbox)
     | FocusCreate (Result Dom.Error ())
-    | CreateChecklist
-    | CreateChecklistDatabase (Result Http.Error Checklist)
     | UpdateCreateChecklist String
-    | SetList Checklist
     | EditChecklist
+    | CreateChecklist
     | UpdateChecklist String
     | DeleteChecklist
-    | DeleteChecklistDatabase Int (Result Http.Error String)
+    | SetList Checklist
     | SetChecklist
     | ResetChecklist
+    | CreateChecklistDatabase (Result Http.Error Checklist)
+    | DeleteChecklistDatabase Int (Result Http.Error String)
     | ShowLists (Result Http.Error (List Checklist))
     | UpdateChecklistDatabase (Result Http.Error Checklist)
-    | Logout
     | ClearAnimation Int
     | Focus String
+    | Logout
     | NoOp

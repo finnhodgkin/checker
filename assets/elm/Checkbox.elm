@@ -60,7 +60,7 @@ saveOrDelete checkbox editString =
             DeleteCheckbox checkbox.id checkbox.description
 
         string ->
-            SaveCheckbox checkbox.id string
+            SaveEditCheckbox checkbox.id
 
 
 editing : Checkbox -> Html Msg
@@ -73,7 +73,7 @@ editing checkbox =
                     , id (toString checkbox.id)
                     , type_ "text"
                     , value string
-                    , onInput (UpdateCheckbox checkbox.id)
+                    , onInput (UpdateEditCheckbox checkbox.id)
                     , autocomplete False
                     ]
                     []
@@ -106,14 +106,14 @@ editingButton checkbox =
             Html.i [ onClick (saveOrDelete checkbox string), class "material-icons button--rounded button--pad" ] [ text "done" ]
 
         _ ->
-            Html.i (captureAnimEnd checkbox.id ++ [ onClick (SetEdit checkbox.id checkbox.description True), class ("material-icons button--rounded button--pad" ++ buttonAnimation checkbox.animate) ]) [ text "edit" ]
+            Html.i (captureAnimEnd checkbox.id ++ [ onClick (SetEditCheckbox checkbox.id checkbox.description True), class ("material-icons button--rounded button--pad" ++ buttonAnimation checkbox.animate) ]) [ text "edit" ]
 
 
 rightButton : Checkbox -> Html Msg
 rightButton checkbox =
     case checkbox.editing of
         Editing _ ->
-            Html.i [ onClick (CancelEdit checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "close" ]
+            Html.i [ onClick (CancelEditCheckbox checkbox.id checkbox.description), class "material-icons button--rounded" ] [ text "close" ]
 
         _ ->
             Html.i (captureAnimEnd checkbox.id ++ [ onClick (DeleteCheckbox checkbox.id checkbox.description), class ("material-icons button--rounded" ++ buttonAnimation checkbox.animate) ]) [ text "delete_forever" ]

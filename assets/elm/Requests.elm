@@ -9,74 +9,96 @@ import Types exposing (..)
 -- REQUESTS
 
 
+req : String -> String -> String -> Http.Expect a -> Http.Body -> Http.Request a
+req url token method expected body =
+    Http.request
+        { method = method
+        , headers = [ Http.header "Authorization" token ]
+        , url = url
+        , body = body
+        , expect = expected
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+
+reqGet : String -> String -> Http.Expect a -> Http.Request a
+reqGet url token expected =
+    req url token "GET" expected Http.emptyBody
+
+
+reqPost : String -> String -> Http.Expect a -> Http.Body -> Http.Request a
+reqPost url token expected body =
+    req url token "POST" expected body
+
+
+reqPut : String -> String -> Http.Expect a -> Http.Body -> Http.Request a
+reqPut url token expected body =
+    req url token "PUT" expected body
+
+
+reqDelete : String -> String -> Http.Request String
+reqDelete url token =
+    req url token "PUT" (Http.expectStringResponse (\response -> Ok "")) Http.emptyBody
+
+
+expectedChecklist : Http.Expect Checklist
+expectedChecklist =
+    Http.expectJson <| Decode.at [ "data" ] checklistDecoder
+
+
+expectedCheckbox : Http.Expect Checkbox
+expectedCheckbox =
+    Http.expectJson <| Decode.at [ "data" ] checkboxDecoder
+
+
+expectedChecklists : Http.Expect (List Checklist)
+expectedChecklists =
+    Http.expectJson <| listChecklistDecoder
+
+
+expectedCheckboxes : Http.Expect (List Checkbox)
+expectedCheckboxes =
+    Http.expectJson <| listCheckboxesDecoder
+
+
+bodyChecklist : String -> Http.Body
+bodyChecklist title =
+    Http.jsonBody <| encodeList title
+
+
+bodyCheckbox : String -> Int -> Http.Body
+bodyCheckbox description listId =
+    Http.jsonBody <| encodeCheckbox description listId
+
+
+bodyCheckboxUpdate : String -> Http.Body
+bodyCheckboxUpdate description =
+    Http.jsonBody <| encodeUpdate description
+
+
 fetchInitialData : String -> Int -> Cmd Msg
 fetchInitialData token id =
     let
         url =
             "/checkboxes?id=" ++ toString id
 
-        expected =
-            Http.expectJson <| listCheckboxesDecoder
-
         request =
-            Http.request
-                { method = "GET"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = Http.emptyBody
-                , expect = expected
-                , timeout = Nothing
-                , withCredentials = False
-                }
+            reqGet url token expectedCheckboxes
     in
-    Http.send GetAll request
+    Http.send GetAllCheckboxes request
 
 
 getLists : String -> Cmd Msg
 getLists token =
-    let
-        url =
-            "/checklists"
-
-        expected =
-            Http.expectJson <| listChecklistDecoder
-
-        request =
-            Http.request
-                { method = "GET"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = Http.emptyBody
-                , expect = expected
-                , timeout = Nothing
-                , withCredentials = False
-                }
-    in
-    Http.send ShowLists request
+    Http.send ShowLists (reqGet "/checklists" token expectedChecklists)
 
 
 createChecklist : String -> String -> Cmd Msg
 createChecklist token title =
     let
-        url =
-            "/checklists"
-
-        body =
-            Http.jsonBody <| encodeList title
-
-        expected =
-            Http.expectJson <| Decode.at [ "data" ] checklistDecoder
-
         request =
-            Http.request
-                { method = "POST"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = body
-                , expect = expected
-                , timeout = Nothing
-                , withCredentials = False
-                }
+            reqPost "/checklists" token expectedChecklist (bodyChecklist title)
     in
     Http.send CreateChecklistDatabase request
 
@@ -84,25 +106,11 @@ createChecklist token title =
 createCheckboxRequest : String -> Int -> String -> Int -> Cmd Msg
 createCheckboxRequest token id description listId =
     let
-        url =
-            "/checkboxes"
-
         body =
-            Http.jsonBody <| encodeCheckbox description listId
-
-        expected =
-            Http.expectJson <| Decode.at [ "data" ] checkboxDecoder
+            bodyCheckbox description listId
 
         request =
-            Http.request
-                { method = "POST"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = body
-                , expect = expected
-                , timeout = Nothing
-                , withCredentials = False
-                }
+            reqPost "/checkboxes" token expectedCheckbox body
     in
     Http.send (CreateCheckboxDatabase id) request
 
@@ -112,46 +120,21 @@ deleteCheckboxRequest token id =
     let
         url =
             "/checkboxes/" ++ toString id
-
-        expectedCheckbox =
-            Http.expectJson (Decode.at [ "data" ] checkboxDecoder)
-
-        request =
-            Http.request
-                { method = "DELETE"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = Http.emptyBody
-                , expect = Http.expectStringResponse (\response -> Ok "")
-                , timeout = Nothing
-                , withCredentials = False
-                }
     in
-    Http.send (DeleteCheckboxDatabase id) request
+    Http.send (DeleteCheckboxDatabase id) (reqDelete url token)
 
 
-updateCheckbox : String -> Checkbox -> Int -> Cmd Msg
-updateCheckbox token checkbox id =
+updateCheckboxDatabase : String -> Checkbox -> Int -> Cmd Msg
+updateCheckboxDatabase token checkbox id =
     let
         url =
             "/checkboxes/" ++ toString checkbox.id
 
         body =
-            Http.jsonBody <| encodeUpdate checkbox.description
-
-        expectedCheckbox =
-            Http.expectJson (Decode.at [ "data" ] checkboxDecoder)
+            bodyCheckboxUpdate checkbox.description
 
         request =
-            Http.request
-                { method = "PUT"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = body
-                , expect = expectedCheckbox
-                , timeout = Nothing
-                , withCredentials = False
-                }
+            reqPut url token expectedCheckbox body
     in
     Http.send (UpdateCheckboxDatabase checkbox) request
 
@@ -165,19 +148,8 @@ checkToggle token id checked =
         body =
             Http.jsonBody <| encodeToggle id checked
 
-        expectedCheckbox =
-            Http.expectJson (Decode.at [ "data" ] checkboxDecoder)
-
         request =
-            Http.request
-                { method = "PUT"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = body
-                , expect = expectedCheckbox
-                , timeout = Nothing
-                , withCredentials = False
-                }
+            reqPut url token expectedCheckbox body
 
         checkbox =
             Checkbox "" False id Saved Set NoAnimation
@@ -196,59 +168,28 @@ updateChecklist token list =
                 Editing str ->
                     str
 
-                Failed str ->
+                _ ->
                     ""
 
-                Set ->
-                    ""
-
-        body =
-            Http.jsonBody <| encodeList description
-
-        expectedChecklist =
-            Http.expectJson (Decode.at [ "data" ] listDecoder)
-
-        listRequest =
-            Http.request
-                { method = "PUT"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = body
-                , expect = expectedChecklist
-                , timeout = Nothing
-                , withCredentials = False
-                }
+        request =
+            reqPut url token expectedChecklist (bodyChecklist description)
     in
     if description == "" then
         Cmd.none
     else
-        Http.send UpdateChecklistDatabase listRequest
+        Http.send UpdateChecklistDatabase request
 
 
 deleteChecklist : Model -> Cmd Msg
 deleteChecklist model =
     let
-        list =
-            model.checklist
+        listId =
+            toString model.checklist.id
 
-        token =
-            model.auth.token
-
-        url =
-            "/checklists/" ++ toString list.id
-
-        listRequest =
-            Http.request
-                { method = "DELETE"
-                , headers = [ Http.header "Authorization" token ]
-                , url = url
-                , body = Http.emptyBody
-                , expect = Http.expectStringResponse (\response -> Ok "")
-                , timeout = Nothing
-                , withCredentials = False
-                }
+        request =
+            reqDelete ("/checklists/" ++ listId) model.auth.token
     in
-    Http.send (DeleteChecklistDatabase model.checklist.id) listRequest
+    Http.send (DeleteChecklistDatabase model.checklist.id) request
 
 
 

@@ -86,7 +86,7 @@ createCheckbox create =
     Html.form [ onSubmit submit, class "create-checkbox" ]
         [ input
             [ type_ "text"
-            , onInput UpdateCreate
+            , onInput UpdateCreateCheckbox
             , id "create"
             , class "create-checkbox__input"
             , value create
