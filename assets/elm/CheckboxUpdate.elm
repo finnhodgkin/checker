@@ -226,9 +226,9 @@ checkboxUpdate msg model =
         CreateCheckboxDatabase id (Err err) ->
             let
                 failure =
-                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id DELETE)
+                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id CREATE)
             in
-            { model | error = "Failed to add the checkbox to the cloud" ++ toString err } ! []
+            { model | error = "Failed to add the checkbox to the cloud", failedPosts = addFailure failure model } ! []
 
         _ ->
             checklistUpdate msg model

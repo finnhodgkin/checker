@@ -15019,19 +15019,20 @@ var _user$project$ChecklistUpdate$noOpArg = function ($int) {
 
 var _user$project$DatabaseFailures$checkboxFailedDelete = F2(
 	function (update, model) {
-		return A2(
+		var filter = A2(
+			_elm_lang$core$List$filter,
+			function (post) {
+				var _p0 = post;
+				if (_p0.ctor === 'CheckboxFailure') {
+					return !_elm_lang$core$Native_Utils.eq(_p0._0.id, update.id);
+				} else {
+					return true;
+				}
+			},
+			model.failedPosts);
+		return (_elm_lang$core$Native_Utils.cmp(update.id, 0) < 1) ? filter : A2(
 			_elm_lang$core$Basics_ops['++'],
-			A2(
-				_elm_lang$core$List$filter,
-				function (post) {
-					var _p0 = post;
-					if (_p0.ctor === 'CheckboxFailure') {
-						return !_elm_lang$core$Native_Utils.eq(_p0._0.id, update.id);
-					} else {
-						return true;
-					}
-				},
-				model.failedPosts),
+			filter,
 			{
 				ctor: '::',
 				_0: _user$project$Types$CheckboxFailure(update),
@@ -15119,7 +15120,9 @@ var _user$project$DatabaseFailures$addCheckboxFailure = F2(
 			case 'CREATE':
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(
+					A4(
+						_elm_lang$core$Debug$log,
+						'testing',
 						_elm_lang$core$List$filter,
 						function (post) {
 							var _p8 = post;
@@ -15519,16 +15522,14 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 						{ctor: '[]'});
 				} else {
 					var failure = _user$project$Types$CheckboxFailure(
-						A4(_user$project$Types$CheckUpdate, _elm_lang$core$Maybe$Nothing, _p6._0, model.checklist.id, _user$project$Types$DELETE));
+						A4(_user$project$Types$CheckUpdate, _elm_lang$core$Maybe$Nothing, _p6._0, model.checklist.id, _user$project$Types$CREATE));
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
 							{
-								error: A2(
-									_elm_lang$core$Basics_ops['++'],
-									'Failed to add the checkbox to the cloud',
-									_elm_lang$core$Basics$toString(_p6._1._0))
+								error: 'Failed to add the checkbox to the cloud',
+								failedPosts: A2(_user$project$DatabaseFailures$addFailure, failure, model)
 							}),
 						{ctor: '[]'});
 				}

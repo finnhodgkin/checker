@@ -1,5 +1,6 @@
 module DatabaseFailures exposing (addFailure)
 
+import Debug exposing (log)
 import Types exposing (..)
 
 
@@ -20,7 +21,8 @@ addCheckboxFailure update model =
             checkboxFailedDelete update model
 
         CREATE ->
-            List.filter
+            log "testing"
+                List.filter
                 (\post ->
                     case post of
                         CheckboxFailure checkbox ->
@@ -99,14 +101,20 @@ addChecklistFailure update model =
 
 checkboxFailedDelete : CheckUpdate -> Model -> List Failure
 checkboxFailedDelete update model =
-    List.filter
-        (\post ->
-            case post of
-                CheckboxFailure checkbox ->
-                    checkbox.id /= update.id
+    let
+        filter =
+            List.filter
+                (\post ->
+                    case post of
+                        CheckboxFailure checkbox ->
+                            checkbox.id /= update.id
 
-                _ ->
-                    True
-        )
-        model.failedPosts
-        ++ [ CheckboxFailure update ]
+                        _ ->
+                            True
+                )
+                model.failedPosts
+    in
+    if update.id <= 0 then
+        filter
+    else
+        filter ++ [ CheckboxFailure update ]
