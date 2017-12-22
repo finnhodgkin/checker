@@ -1,9 +1,11 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Checkbox exposing (focusElement)
 import CheckboxUpdate exposing (..)
 import Dom exposing (..)
 import Html exposing (Html)
+import Json.Encode exposing (Value)
+import Offline exposing (decodeOnlineOffline)
 import Page exposing (content)
 import Requests exposing (..)
 import Types exposing (..)
@@ -15,15 +17,25 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
+
+
+port isOnline : (Value -> msg) -> Sub msg
+
+
+subscriptions : a -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ isOnline decodeOnlineOffline
+        ]
 
 
 init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] ! [ getLists token ]
+            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online ! [ getLists token ]
 
         Nothing ->
             Model []
@@ -36,6 +48,7 @@ init authToken =
                 Unloaded
                 Empty
                 []
+                Online
                 ! []
 
 

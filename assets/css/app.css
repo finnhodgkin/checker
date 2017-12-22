@@ -72,7 +72,6 @@ body,
 
 .checketlist-header__title--centered {
   text-align: center;
-  margin-left: 3rem;
 }
 
 .checklist-header {
@@ -339,4 +338,9 @@ body,
   background-color: papayawhip;
   z-index: 1;
   border-top: 1px solid #cfc1aa;
+}
+
+.online-offline {
+  font-size: 2.2rem;
+  margin-left: 0.8rem;
 }

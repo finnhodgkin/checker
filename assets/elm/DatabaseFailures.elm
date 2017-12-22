@@ -1,6 +1,7 @@
 module DatabaseFailures exposing (addFailure)
 
 import Debug exposing (log)
+import Json.Decode exposing (..)
 import Types exposing (..)
 
 

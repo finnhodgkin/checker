@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes as HA exposing (..)
 import Html.Events exposing (..)
 import Maybe exposing (..)
+import Offline exposing (online)
 import Types exposing (..)
 
 
@@ -34,7 +35,8 @@ checklists model =
     div []
         [ header [ class "checklist-header" ]
             [ section [ class "checklist-header__wrap" ]
-                [ h1
+                [ online model
+                , h1
                     [ class "checklist-header__title checketlist-header__title--centered" ]
                     [ text "Your checklists" ]
                 , Html.i [ class "material-icons logout", onClick Logout ] [ text "person_outline" ]

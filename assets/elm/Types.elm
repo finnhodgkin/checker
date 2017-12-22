@@ -15,7 +15,13 @@ type alias Model =
     , savedChecklist : Status
     , checkboxLoaded : Load
     , failedPosts : List Failure
+    , online : Online
     }
+
+
+type Online
+    = Online
+    | Offline
 
 
 type Failure
@@ -113,4 +119,5 @@ type Msg
     | ClearAnimation Int
     | Focus String
     | Logout
+    | OnlineOffline Online
     | NoOp

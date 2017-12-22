@@ -39,7 +39,7 @@ reqPut url token expected body =
 
 reqDelete : String -> String -> Http.Request String
 reqDelete url token =
-    req url token "PUT" (Http.expectStringResponse (\response -> Ok "")) Http.emptyBody
+    req url token "DELETE" (Http.expectStringResponse (\response -> Ok "")) Http.emptyBody
 
 
 expectedChecklist : Http.Expect Checklist

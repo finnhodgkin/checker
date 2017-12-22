@@ -1,14 +1,17 @@
-module AuthenticationUpdate exposing (authenticationUpdate)
+port module AuthenticationUpdate exposing (authenticationUpdate)
 
-import Checkbox exposing (focusElement)
-import Requests exposing (..)
+import Offline exposing (offlineUpdate)
 import Types exposing (..)
 
 
+port logOut : Bool -> Cmd msg
+
+
+authenticationUpdate : Msg -> Model -> ( Model, Cmd Msg )
 authenticationUpdate msg model =
     case msg of
         Logout ->
-            { model | auth = Auth "" } ! []
+            { model | auth = Auth "" } ! [ logOut True ]
 
         _ ->
-            model ! []
+            offlineUpdate msg model
