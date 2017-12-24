@@ -7,11 +7,6 @@ import Requests exposing (..)
 import Types exposing (..)
 
 
-noOpArg : Int -> Cmd Msg
-noOpArg int =
-    Cmd.none
-
-
 checklistUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checklistUpdate msg model =
     case msg of

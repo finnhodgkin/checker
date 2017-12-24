@@ -15184,9 +15184,6 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 				return A2(_user$project$AuthenticationUpdate$authenticationUpdate, msg, model);
 		}
 	});
-var _user$project$ChecklistUpdate$noOpArg = function ($int) {
-	return _elm_lang$core$Platform_Cmd$none;
-};
 
 var _user$project$DatabaseFailures$checkboxFailedDelete = F2(
 	function (update, model) {
