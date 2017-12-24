@@ -4,36 +4,39 @@ import Requests exposing (..)
 import Types exposing (..)
 
 
-periodicSendUpdate : Msg -> Model -> ( Model, Cmd Msg )
-periodicSendUpdate msg model =
-    case msg of
-        SendFailures _ ->
-            case model.online of
-                Online ->
-                    { model | failedPosts = [] } ! sendFailures model
-
-                Offline ->
-                    model ! []
-
-        _ ->
-            model ! []
-
-
 sendFailures : Model -> List (Cmd Msg)
 sendFailures model =
     let
         eachFailure failure =
             case failure of
                 CheckboxFailure update ->
+                    let
+                        description =
+                            Maybe.withDefault "" update.description
+                    in
                     case update.command of
                         DELETE ->
-                            deleteCheckboxRequest model.auth.token update.id
+                            deleteCheckboxRequest
+                                model.auth.token
+                                update.id
 
                         CREATE ->
-                            createCheckboxRequest model.auth.token update.id (Maybe.withDefault "" update.description) update.listId
+                            createCheckboxRequest
+                                model.auth.token
+                                update.id
+                                description
+                                update.listId
 
                         EDIT ->
-                            Cmd.none
+                            checkboxUpdateBoth model.auth.token
+                                (Checkbox
+                                    description
+                                    update.checked
+                                    update.id
+                                    Saved
+                                    Set
+                                    NoAnimation
+                                )
 
                         SAVE ->
                             Cmd.none

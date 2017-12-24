@@ -13914,6 +13914,33 @@ var _user$project$Requests$encodeCheckboxAll = F3(
 				_1: {ctor: '[]'}
 			});
 	});
+var _user$project$Requests$encodeCheckboxNoList = F2(
+	function (description, checked) {
+		var checkbox = _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'checked',
+					_1: _elm_lang$core$Json_Encode$bool(checked)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'description',
+						_1: _elm_lang$core$Json_Encode$string(description)
+					},
+					_1: {ctor: '[]'}
+				}
+			});
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'checkbox', _1: checkbox},
+				_1: {ctor: '[]'}
+			});
+	});
 var _user$project$Requests$encodeCheckbox = F2(
 	function (description, checklistId) {
 		return A3(_user$project$Requests$encodeCheckboxAll, description, false, checklistId);
@@ -14087,6 +14114,20 @@ var _user$project$Requests$checkToggle = F3(
 			_user$project$Types$UpdateCheckboxDatabase(checkbox),
 			request);
 	});
+var _user$project$Requests$checkboxUpdateBoth = F2(
+	function (token, checkbox) {
+		var body = _elm_lang$http$Http$jsonBody(
+			A2(_user$project$Requests$encodeCheckboxNoList, checkbox.description, checkbox.checked));
+		var url = A2(
+			_elm_lang$core$Basics_ops['++'],
+			'/checkboxes/',
+			_elm_lang$core$Basics$toString(checkbox.id));
+		var request = A4(_user$project$Requests$reqPut, url, token, _user$project$Requests$expectedCheckbox, body);
+		return A2(
+			_elm_lang$http$Http$send,
+			_user$project$Types$UpdateCheckboxDatabase(checkbox),
+			request);
+	});
 var _user$project$Requests$updateChecklist = F2(
 	function (token, list) {
 		var description = function () {
@@ -14150,19 +14191,18 @@ var _user$project$PeriodicSend$sendFailures = function (model) {
 		var _p0 = failure;
 		if (_p0.ctor === 'CheckboxFailure') {
 			var _p2 = _p0._0;
+			var description = A2(_elm_lang$core$Maybe$withDefault, '', _p2.description);
 			var _p1 = _p2.command;
 			switch (_p1.ctor) {
 				case 'DELETE':
 					return A2(_user$project$Requests$deleteCheckboxRequest, model.auth.token, _p2.id);
 				case 'CREATE':
-					return A4(
-						_user$project$Requests$createCheckboxRequest,
-						model.auth.token,
-						_p2.id,
-						A2(_elm_lang$core$Maybe$withDefault, '', _p2.description),
-						_p2.listId);
+					return A4(_user$project$Requests$createCheckboxRequest, model.auth.token, _p2.id, description, _p2.listId);
 				case 'EDIT':
-					return _elm_lang$core$Platform_Cmd$none;
+					return A2(
+						_user$project$Requests$checkboxUpdateBoth,
+						model.auth.token,
+						A6(_user$project$Types$Checkbox, description, _p2.checked, _p2.id, _user$project$Types$Saved, _user$project$Types$Set, _user$project$Types$NoAnimation));
 				default:
 					return _elm_lang$core$Platform_Cmd$none;
 			}
@@ -14172,33 +14212,6 @@ var _user$project$PeriodicSend$sendFailures = function (model) {
 	};
 	return A2(_elm_lang$core$List$map, eachFailure, model.failedPosts);
 };
-var _user$project$PeriodicSend$periodicSendUpdate = F2(
-	function (msg, model) {
-		var _p3 = msg;
-		if (_p3.ctor === 'SendFailures') {
-			var _p4 = model.online;
-			if (_p4.ctor === 'Online') {
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							failedPosts: {ctor: '[]'}
-						}),
-					_user$project$PeriodicSend$sendFailures(model));
-			} else {
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					model,
-					{ctor: '[]'});
-			}
-		} else {
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				model,
-				{ctor: '[]'});
-		}
-	});
 
 var _user$project$Offline$offlineUpdate = F2(
 	function (msg, model) {
@@ -14210,8 +14223,11 @@ var _user$project$Offline$offlineUpdate = F2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{online: _user$project$Types$Online}),
-					{ctor: '[]'});
+						{
+							failedPosts: {ctor: '[]'},
+							online: _user$project$Types$Online
+						}),
+					_user$project$PeriodicSend$sendFailures(model));
 			} else {
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -14221,7 +14237,14 @@ var _user$project$Offline$offlineUpdate = F2(
 					{ctor: '[]'});
 			}
 		} else {
-			return A2(_user$project$PeriodicSend$periodicSendUpdate, msg, model);
+			return A2(
+				_elm_lang$core$Platform_Cmd_ops['!'],
+				model,
+				{
+					ctor: '::',
+					_0: _elm_lang$core$Platform_Cmd$none,
+					_1: {ctor: '[]'}
+				});
 		}
 	});
 var _user$project$Offline$decodeOnlineOffline = function (isOnline) {
@@ -16086,11 +16109,7 @@ var _user$project$Main$subscriptions = function (model) {
 		{
 			ctor: '::',
 			_0: _user$project$Main$isOnline(_user$project$Offline$decodeOnlineOffline),
-			_1: {
-				ctor: '::',
-				_0: A2(_elm_lang$core$Time$every, 2 * _elm_lang$core$Time$second, _user$project$Types$SendFailures),
-				_1: {ctor: '[]'}
-			}
+			_1: {ctor: '[]'}
 		});
 };
 var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(

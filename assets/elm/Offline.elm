@@ -36,10 +36,10 @@ offlineUpdate msg model =
         OnlineOffline online ->
             case online of
                 Online ->
-                    { model | online = Online } ! []
+                    { model | failedPosts = [], online = Online } ! sendFailures model
 
                 Offline ->
                     { model | online = Offline } ! []
 
         _ ->
-            periodicSendUpdate msg model
+            model ! [ Cmd.none ]

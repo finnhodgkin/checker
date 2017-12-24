@@ -8,7 +8,6 @@ import Json.Encode exposing (Value)
 import Offline exposing (decodeOnlineOffline)
 import Page exposing (content)
 import Requests exposing (..)
-import Time exposing (..)
 import Types exposing (..)
 
 
@@ -29,7 +28,6 @@ subscriptions : a -> Sub Msg
 subscriptions model =
     Sub.batch
         [ isOnline decodeOnlineOffline
-        , every (2 * second) SendFailures
         ]
 
 

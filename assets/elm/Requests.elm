@@ -157,6 +157,21 @@ checkToggle token id checked =
     Http.send (UpdateCheckboxDatabase checkbox) request
 
 
+checkboxUpdateBoth : String -> Checkbox -> Cmd Msg
+checkboxUpdateBoth token checkbox =
+    let
+        url =
+            "/checkboxes/" ++ toString checkbox.id
+
+        body =
+            Http.jsonBody <| encodeCheckboxNoList checkbox.description checkbox.checked
+
+        request =
+            reqPut url token expectedCheckbox body
+    in
+    Http.send (UpdateCheckboxDatabase checkbox) request
+
+
 updateChecklist : String -> Checklist -> Cmd Msg
 updateChecklist token list =
     let
@@ -225,6 +240,19 @@ encodeToggle id checked =
 encodeCheckbox : String -> Int -> Value
 encodeCheckbox description checklistId =
     encodeCheckboxAll description False checklistId
+
+
+encodeCheckboxNoList : String -> Bool -> Value
+encodeCheckboxNoList description checked =
+    let
+        checkbox =
+            JE.object
+                [ ( "checked", JE.bool checked )
+                , ( "description", JE.string description )
+                ]
+    in
+    JE.object
+        [ ( "checkbox", checkbox ) ]
 
 
 encodeCheckboxAll : String -> Bool -> Int -> Value
