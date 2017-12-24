@@ -13590,6 +13590,9 @@ var _user$project$Types$NoAnimation = {ctor: 'NoAnimation'};
 var _user$project$Types$Delete = {ctor: 'Delete'};
 var _user$project$Types$Create = {ctor: 'Create'};
 var _user$project$Types$NoOp = {ctor: 'NoOp'};
+var _user$project$Types$BadDecode = function (a) {
+	return {ctor: 'BadDecode', _0: a};
+};
 var _user$project$Types$SendFailures = function (a) {
 	return {ctor: 'SendFailures', _0: a};
 };
@@ -14959,6 +14962,100 @@ var _user$project$Checklist$getEditString = function (editing) {
 	}
 };
 
+var _user$project$SaveToStorage$encodeEditing = function (editing) {
+	var _p0 = editing;
+	if (_p0.ctor === 'Editing') {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'edit',
+					_1: _elm_lang$core$Json_Encode$string(_p0._0)
+				},
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return _elm_lang$core$Json_Encode$string('Set');
+	}
+};
+var _user$project$SaveToStorage$encodeChecklist = function (checklist) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'id',
+				_1: _elm_lang$core$Json_Encode$int(checklist.id)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'title',
+					_1: _elm_lang$core$Json_Encode$string(checklist.title)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'editing',
+						_1: _user$project$SaveToStorage$encodeEditing(checklist.editing)
+					},
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeListChecklist = function (checklists) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeChecklist, checklists));
+};
+var _user$project$SaveToStorage$decodeListChecklist = function (checklists) {
+	var decoded = A2(
+		_elm_lang$core$Json_Decode$decodeValue,
+		_elm_lang$core$Json_Decode$list(
+			A4(
+				_elm_lang$core$Json_Decode$map3,
+				_user$project$Types$Checklist,
+				A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
+				A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+				A2(
+					_elm_lang$core$Json_Decode$field,
+					'editing',
+					_elm_lang$core$Json_Decode$oneOf(
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (str) {
+									return _elm_lang$core$Json_Decode$succeed(
+										_user$project$Types$Editing(str));
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
+								_1: {ctor: '[]'}
+							}
+						})))),
+		checklists);
+	var _p1 = decoded;
+	if (_p1.ctor === 'Ok') {
+		return _user$project$Types$ShowLists(
+			_elm_lang$core$Result$Ok(_p1._0));
+	} else {
+		return _user$project$Types$BadDecode(
+			_elm_lang$core$Basics$toString(_p1._0));
+	}
+};
+var _user$project$SaveToStorage$setLists = _elm_lang$core$Native_Platform.outgoingPort(
+	'setLists',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$getChecklists = _elm_lang$core$Native_Platform.incomingPort('getChecklists', _elm_lang$core$Json_Decode$value);
+
 var _user$project$ChecklistUpdate$checklistUpdate = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -14981,24 +15078,25 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 			case 'CreateChecklistDatabase':
 				if (_p0._0.ctor === 'Ok') {
 					var _p1 = _p0._0._0;
+					var checklists = A2(
+						_elm_lang$core$Basics_ops['++'],
+						model.checklists,
+						{
+							ctor: '::',
+							_0: _p1,
+							_1: {ctor: '[]'}
+						});
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{
-								checklist: _p1,
-								checklists: A2(
-									_elm_lang$core$Basics_ops['++'],
-									model.checklists,
-									{
-										ctor: '::',
-										_0: _p1,
-										_1: {ctor: '[]'}
-									}),
-								savedChecklist: _user$project$Types$Saved,
-								checkboxLoaded: _user$project$Types$Loaded
-							}),
-						{ctor: '[]'});
+							{checklist: _p1, checklists: checklists, savedChecklist: _user$project$Types$Saved, checkboxLoaded: _user$project$Types$Loaded}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$setLists(
+								_user$project$SaveToStorage$encodeListChecklist(checklists)),
+							_1: {ctor: '[]'}
+						});
 				} else {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
@@ -15180,6 +15278,13 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 							}),
 						{ctor: '[]'});
 				}
+			case 'BadDecode':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{error: _p0._0}),
+					{ctor: '[]'});
 			default:
 				return A2(_user$project$AuthenticationUpdate$authenticationUpdate, msg, model);
 		}
@@ -16119,7 +16224,11 @@ var _user$project$Main$subscriptions = function (model) {
 		{
 			ctor: '::',
 			_0: _user$project$Main$isOnline(_user$project$Offline$decodeOnlineOffline),
-			_1: {ctor: '[]'}
+			_1: {
+				ctor: '::',
+				_0: _user$project$SaveToStorage$getChecklists(_user$project$SaveToStorage$decodeListChecklist),
+				_1: {ctor: '[]'}
+			}
 		});
 };
 var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
@@ -16138,7 +16247,7 @@ var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"OnlineOffline":["Types.Online"],"UpdateCreateChecklist":["String"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"BadDecode":["String"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"OnlineOffline":["Types.Online"],"UpdateCreateChecklist":["String"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])

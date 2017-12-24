@@ -121,4 +121,5 @@ type Msg
     | Logout
     | OnlineOffline Online
     | SendFailures Time
+    | BadDecode String
     | NoOp

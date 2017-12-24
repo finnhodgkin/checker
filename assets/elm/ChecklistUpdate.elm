@@ -4,6 +4,7 @@ import AuthenticationUpdate exposing (..)
 import Checkbox exposing (focusElement)
 import Checklist exposing (getEditString)
 import Requests exposing (..)
+import SaveToStorage exposing (encodeListChecklist, setLists)
 import Types exposing (..)
 
 
@@ -14,14 +15,17 @@ checklistUpdate msg model =
             { model | createChecklist = "", checklist = Checklist model.createChecklist 1 Set, savedChecklist = Unsaved } ! [ createChecklist model.auth.token model.createChecklist ]
 
         CreateChecklistDatabase (Ok checklist) ->
+            let
+                checklists =
+                    model.checklists ++ [ checklist ]
+            in
             { model
-                | checklist =
-                    checklist
-                , checklists = model.checklists ++ [ checklist ]
+                | checklist = checklist
+                , checklists = checklists
                 , savedChecklist = Saved
                 , checkboxLoaded = Loaded
             }
-                ! []
+                ! [ setLists (encodeListChecklist checklists) ]
 
         CreateChecklistDatabase (Err err) ->
             { model | error = toString err } ! []
@@ -94,6 +98,9 @@ checklistUpdate msg model =
 
         ShowLists (Err err) ->
             { model | error = toString err } ! []
+
+        BadDecode error ->
+            { model | error = error } ! []
 
         _ ->
             authenticationUpdate msg model
