@@ -14,9 +14,6 @@ getEditString editing =
         Editing str ->
             Just str
 
-        Failed str ->
-            Nothing
-
         Set ->
             Nothing
 

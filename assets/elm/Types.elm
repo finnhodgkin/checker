@@ -59,7 +59,6 @@ type Status
 
 type Editing
     = Editing String
-    | Failed String
     | Set
 
 
