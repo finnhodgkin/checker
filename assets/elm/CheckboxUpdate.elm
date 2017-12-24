@@ -187,8 +187,16 @@ checkboxUpdate msg model =
                         description ->
                             Just description
 
+                checkboxDescription =
+                    case findCheckbox check.id model.checks of
+                        Just checkbox ->
+                            Just checkbox.description
+
+                        Nothing ->
+                            Nothing
+
                 failure =
-                    CheckboxFailure (CheckUpdate description check.id model.checklist.id EDIT)
+                    CheckboxFailure (CheckUpdate checkboxDescription check.checked check.id model.checklist.id EDIT)
             in
             { model
                 | error = "Failed to change the checkbox in the cloud"
@@ -212,21 +220,21 @@ checkboxUpdate msg model =
         DeleteCheckboxDatabase id (Err err) ->
             let
                 failure =
-                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id DELETE)
+                    CheckboxFailure (CheckUpdate Nothing False id model.checklist.id DELETE)
             in
             { model | error = "", failedPosts = addFailure failure model } ! []
 
-        CreateCheckboxDatabase id (Ok checkbox) ->
+        CreateCheckboxDatabase id description (Ok checkbox) ->
             { model
                 | checks =
                     updateCheckbox id checkbox model.checks
             }
                 ! []
 
-        CreateCheckboxDatabase id (Err err) ->
+        CreateCheckboxDatabase id description (Err err) ->
             let
                 failure =
-                    CheckboxFailure (CheckUpdate Nothing id model.checklist.id CREATE)
+                    CheckboxFailure (CheckUpdate (Just description) False id model.checklist.id CREATE)
             in
             { model | error = "Failed to add the checkbox to the cloud", failedPosts = addFailure failure model } ! []
 

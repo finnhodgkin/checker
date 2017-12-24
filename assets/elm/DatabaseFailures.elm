@@ -1,7 +1,5 @@
 module DatabaseFailures exposing (addFailure)
 
-import Debug exposing (log)
-import Json.Decode exposing (..)
 import Types exposing (..)
 
 
@@ -22,8 +20,7 @@ addCheckboxFailure update model =
             checkboxFailedDelete update model
 
         CREATE ->
-            log "testing"
-                List.filter
+            List.filter
                 (\post ->
                     case post of
                         CheckboxFailure checkbox ->

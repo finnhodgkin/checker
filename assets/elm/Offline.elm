@@ -3,6 +3,7 @@ module Offline exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode as Decode
+import PeriodicSend exposing (..)
 import Types exposing (..)
 
 
@@ -10,7 +11,7 @@ online : Model -> Html Msg
 online model =
     case model.online of
         Online ->
-            Html.i [ class "material-icons online-offline" ] [ text "cloud" ]
+            Html.i [ class "material-icons online-offline" ] [ text "cloud_queue" ]
 
         Offline ->
             Html.i [ class "material-icons online-offline" ] [ text "cloud_off" ]
@@ -41,4 +42,4 @@ offlineUpdate msg model =
                     { model | online = Offline } ! []
 
         _ ->
-            model ! []
+            periodicSendUpdate msg model

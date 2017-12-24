@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Dom exposing (..)
 import Http
+import Time exposing (Time)
 
 
 type alias Model =
@@ -30,7 +31,7 @@ type Failure
 
 
 type alias CheckUpdate =
-    { description : Maybe String, id : Int, listId : Int, command : Request }
+    { description : Maybe String, checked : Bool, id : Int, listId : Int, command : Request }
 
 
 type alias ChecklistUpdate =
@@ -102,7 +103,7 @@ type Msg
     | DeleteCheckboxDatabase Int (Result Http.Error String)
     | UpdateCheckboxDatabase Checkbox (Result Http.Error Checkbox)
     | GetAllCheckboxes (Result Http.Error (List Checkbox))
-    | CreateCheckboxDatabase Int (Result Http.Error Checkbox)
+    | CreateCheckboxDatabase Int String (Result Http.Error Checkbox)
     | FocusCreate (Result Dom.Error ())
     | UpdateCreateChecklist String
     | EditChecklist
@@ -120,4 +121,5 @@ type Msg
     | Focus String
     | Logout
     | OnlineOffline Online
+    | SendFailures Time
     | NoOp

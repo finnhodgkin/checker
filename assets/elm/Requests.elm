@@ -112,7 +112,7 @@ createCheckboxRequest token id description listId =
         request =
             reqPost "/checkboxes" token expectedCheckbox body
     in
-    Http.send (CreateCheckboxDatabase id) request
+    Http.send (CreateCheckboxDatabase id description) request
 
 
 deleteCheckboxRequest : String -> Int -> Cmd Msg
@@ -152,7 +152,7 @@ checkToggle token id checked =
             reqPut url token expectedCheckbox body
 
         checkbox =
-            Checkbox "" False id Saved Set NoAnimation
+            Checkbox "" checked id Saved Set NoAnimation
     in
     Http.send (UpdateCheckboxDatabase checkbox) request
 
@@ -224,11 +224,16 @@ encodeToggle id checked =
 
 encodeCheckbox : String -> Int -> Value
 encodeCheckbox description checklistId =
+    encodeCheckboxAll description False checklistId
+
+
+encodeCheckboxAll : String -> Bool -> Int -> Value
+encodeCheckboxAll description checked checklistId =
     let
         checkbox =
             JE.object
                 [ ( "description", JE.string description )
-                , ( "checked", JE.bool False )
+                , ( "checked", JE.bool checked )
                 , ( "checklist_id", JE.int checklistId )
                 ]
     in
