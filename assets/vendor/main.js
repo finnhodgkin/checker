@@ -14073,9 +14073,10 @@ var _user$project$Requests$createChecklist = F2(
 			_user$project$Requests$bodyChecklist(title));
 		return A2(_elm_lang$http$Http$send, _user$project$Types$CreateChecklistDatabase, request);
 	});
-var _user$project$Requests$createCheckboxRequest = F4(
-	function (token, id, description, listId) {
-		var body = A2(_user$project$Requests$bodyCheckbox, description, listId);
+var _user$project$Requests$createCheckboxRequest = F5(
+	function (token, id, description, checked, listId) {
+		var body = _elm_lang$http$Http$jsonBody(
+			A3(_user$project$Requests$encodeCheckboxAll, description, checked, listId));
 		var request = A4(_user$project$Requests$reqPost, '/checkboxes', token, _user$project$Requests$expectedCheckbox, body);
 		return A2(
 			_elm_lang$http$Http$send,
@@ -14197,7 +14198,7 @@ var _user$project$PeriodicSend$sendFailures = function (model) {
 				case 'DELETE':
 					return A2(_user$project$Requests$deleteCheckboxRequest, model.auth.token, _p2.id);
 				case 'CREATE':
-					return A4(_user$project$Requests$createCheckboxRequest, model.auth.token, _p2.id, description, _p2.listId);
+					return A5(_user$project$Requests$createCheckboxRequest, model.auth.token, _p2.id, description, _p2.checked, _p2.listId);
 				case 'EDIT':
 					return A2(
 						_user$project$Requests$checkboxUpdateBoth,
@@ -15287,10 +15288,46 @@ var _user$project$DatabaseFailures$addChecklistFailure = F2(
 					model.failedPosts);
 		}
 	});
+var _user$project$DatabaseFailures$checkboxEdit = F2(
+	function (update, model) {
+		return (_elm_lang$core$Native_Utils.cmp(update.id, 0) < 1) ? A2(
+			_elm_lang$core$List$map,
+			function (failure) {
+				var _p7 = failure;
+				if (_p7.ctor === 'CheckboxFailure') {
+					var _p8 = _p7._0;
+					return (_elm_lang$core$Native_Utils.eq(_p8.id, update.id) && _elm_lang$core$Native_Utils.eq(_p8.command, _user$project$Types$CREATE)) ? _user$project$Types$CheckboxFailure(
+						_elm_lang$core$Native_Utils.update(
+							update,
+							{command: _user$project$Types$CREATE})) : _user$project$Types$CheckboxFailure(_p8);
+				} else {
+					return _p7;
+				}
+			},
+			model.failedPosts) : A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(
+				_elm_lang$core$List$filter,
+				function (post) {
+					var _p9 = post;
+					if (_p9.ctor === 'CheckboxFailure') {
+						var _p10 = _p9._0;
+						return (!_elm_lang$core$Native_Utils.eq(_p10.id, update.id)) || (!_elm_lang$core$Native_Utils.eq(_p10.command, _user$project$Types$EDIT));
+					} else {
+						return true;
+					}
+				},
+				model.failedPosts),
+			{
+				ctor: '::',
+				_0: _user$project$Types$CheckboxFailure(update),
+				_1: {ctor: '[]'}
+			});
+	});
 var _user$project$DatabaseFailures$addCheckboxFailure = F2(
 	function (update, model) {
-		var _p7 = update.command;
-		switch (_p7.ctor) {
+		var _p11 = update.command;
+		switch (_p11.ctor) {
 			case 'DELETE':
 				return A2(_user$project$DatabaseFailures$checkboxFailedDelete, update, model);
 			case 'CREATE':
@@ -15299,9 +15336,9 @@ var _user$project$DatabaseFailures$addCheckboxFailure = F2(
 					A2(
 						_elm_lang$core$List$filter,
 						function (post) {
-							var _p8 = post;
-							if (_p8.ctor === 'CheckboxFailure') {
-								return !_elm_lang$core$Native_Utils.eq(_p8._0.id, update.id);
+							var _p12 = post;
+							if (_p12.ctor === 'CheckboxFailure') {
+								return !_elm_lang$core$Native_Utils.eq(_p12._0.id, update.id);
 							} else {
 								return true;
 							}
@@ -15313,25 +15350,7 @@ var _user$project$DatabaseFailures$addCheckboxFailure = F2(
 						_1: {ctor: '[]'}
 					});
 			case 'EDIT':
-				return A2(
-					_elm_lang$core$Basics_ops['++'],
-					A2(
-						_elm_lang$core$List$filter,
-						function (post) {
-							var _p9 = post;
-							if (_p9.ctor === 'CheckboxFailure') {
-								var _p10 = _p9._0;
-								return (!_elm_lang$core$Native_Utils.eq(_p10.id, update.id)) || (!_elm_lang$core$Native_Utils.eq(_p10.command, _user$project$Types$EDIT));
-							} else {
-								return true;
-							}
-						},
-						model.failedPosts),
-					{
-						ctor: '::',
-						_0: _user$project$Types$CheckboxFailure(update),
-						_1: {ctor: '[]'}
-					});
+				return A2(_user$project$DatabaseFailures$checkboxEdit, update, model);
 			default:
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
@@ -15345,11 +15364,11 @@ var _user$project$DatabaseFailures$addCheckboxFailure = F2(
 	});
 var _user$project$DatabaseFailures$addFailure = F2(
 	function (failure, model) {
-		var _p11 = failure;
-		if (_p11.ctor === 'CheckboxFailure') {
-			return A2(_user$project$DatabaseFailures$addCheckboxFailure, _p11._0, model);
+		var _p13 = failure;
+		if (_p13.ctor === 'CheckboxFailure') {
+			return A2(_user$project$DatabaseFailures$addCheckboxFailure, _p13._0, model);
 		} else {
-			return A2(_user$project$DatabaseFailures$addChecklistFailure, _p11._0, model);
+			return A2(_user$project$DatabaseFailures$addChecklistFailure, _p13._0, model);
 		}
 	});
 
@@ -15603,7 +15622,7 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 						}),
 					{
 						ctor: '::',
-						_0: A4(_user$project$Requests$createCheckboxRequest, model.auth.token, id, model.create, model.checklist.id),
+						_0: A5(_user$project$Requests$createCheckboxRequest, model.auth.token, id, model.create, false, model.checklist.id),
 						_1: {
 							ctor: '::',
 							_0: _user$project$Checkbox$focusElement('create'),

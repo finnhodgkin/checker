@@ -103,11 +103,11 @@ createChecklist token title =
     Http.send CreateChecklistDatabase request
 
 
-createCheckboxRequest : String -> Int -> String -> Int -> Cmd Msg
-createCheckboxRequest token id description listId =
+createCheckboxRequest : String -> Int -> String -> Bool -> Int -> Cmd Msg
+createCheckboxRequest token id description checked listId =
     let
         body =
-            bodyCheckbox description listId
+            Http.jsonBody <| encodeCheckboxAll description checked listId
 
         request =
             reqPost "/checkboxes" token expectedCheckbox body

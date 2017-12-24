@@ -33,21 +33,41 @@ addCheckboxFailure update model =
                 ++ [ CheckboxFailure update ]
 
         EDIT ->
-            List.filter
-                (\post ->
-                    case post of
-                        CheckboxFailure checkbox ->
-                            (checkbox.id /= update.id)
-                                || (checkbox.command /= EDIT)
-
-                        _ ->
-                            True
-                )
-                model.failedPosts
-                ++ [ CheckboxFailure update ]
+            checkboxEdit update model
 
         SAVE ->
             model.failedPosts ++ [ CheckboxFailure update ]
+
+
+checkboxEdit : CheckUpdate -> Model -> List Failure
+checkboxEdit update model =
+    if update.id <= 0 then
+        List.map
+            (\failure ->
+                case failure of
+                    CheckboxFailure checkbox ->
+                        if (checkbox.id == update.id) && checkbox.command == CREATE then
+                            CheckboxFailure { update | command = CREATE }
+                        else
+                            CheckboxFailure checkbox
+
+                    failure ->
+                        failure
+            )
+            model.failedPosts
+    else
+        List.filter
+            (\post ->
+                case post of
+                    CheckboxFailure checkbox ->
+                        (checkbox.id /= update.id)
+                            || (checkbox.command /= EDIT)
+
+                    _ ->
+                        True
+            )
+            model.failedPosts
+            ++ [ CheckboxFailure update ]
 
 
 addChecklistFailure : ChecklistUpdate -> Model -> List Failure

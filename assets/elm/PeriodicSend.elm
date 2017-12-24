@@ -25,6 +25,7 @@ sendFailures model =
                                 model.auth.token
                                 update.id
                                 description
+                                update.checked
                                 update.listId
 
                         EDIT ->

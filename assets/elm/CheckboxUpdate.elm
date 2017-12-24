@@ -172,7 +172,7 @@ checkboxUpdate msg model =
                     createCheckbox model
             in
             { model | checks = model.checks ++ [ newCheckbox ], create = "" }
-                ! [ createCheckboxRequest model.auth.token id model.create model.checklist.id, focusElement "create" ]
+                ! [ createCheckboxRequest model.auth.token id model.create False model.checklist.id, focusElement "create" ]
 
         UpdateCheckboxDatabase _ (Ok checkbox) ->
             { model | checks = updateFromDatabase checkbox model.checks } ! []
