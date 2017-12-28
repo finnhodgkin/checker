@@ -15971,7 +15971,7 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{error: 'Failed to grab saved checkboxes', checkboxLoaded: _user$project$Types$Loaded}),
+							{error: '', checkboxLoaded: _user$project$Types$Loaded}),
 						{ctor: '[]'});
 				}
 			case 'DeleteCheckboxDatabase':

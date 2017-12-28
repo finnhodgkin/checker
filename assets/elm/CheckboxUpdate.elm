@@ -209,7 +209,7 @@ checkboxUpdate msg model =
             { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! [ setCheckboxes (encodeCheckboxes model.checklist.id checkboxes) ]
 
         GetAllCheckboxes (Err _) ->
-            { model | error = "Failed to grab saved checkboxes", checkboxLoaded = Loaded } ! []
+            { model | error = "", checkboxLoaded = Loaded } ! []
 
         DeleteCheckboxDatabase id (Ok checkbox) ->
             let
