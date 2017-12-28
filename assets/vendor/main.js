@@ -16272,6 +16272,7 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 							_1: {ctor: '[]'}
 						});
 				} else {
+					var _p18 = _p6._2._0;
 					var failure = _user$project$Types$CheckboxFailure(
 						A5(
 							_user$project$Types$CheckUpdate,
@@ -16281,16 +16282,54 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 							model.checklist.id,
 							_user$project$Types$CREATE));
 					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{error: 'Failed to add the checkbox to the cloud', failedPosts: failures}),
-						{
-							ctor: '::',
-							_0: _user$project$SaveToStorage$saveFailures(failures),
-							_1: {ctor: '[]'}
-						});
+					var _p16 = _p18;
+					if (_p16.ctor === 'BadStatus') {
+						var _p17 = _p16._0.status.code;
+						switch (_p17) {
+							case 404:
+								return A2(
+									_elm_lang$core$Platform_Cmd_ops['!'],
+									_elm_lang$core$Native_Utils.update(
+										model,
+										{error: 'Error adding checkboxes'}),
+									{ctor: '[]'});
+							case 401:
+								return A2(
+									_elm_lang$core$Platform_Cmd_ops['!'],
+									_elm_lang$core$Native_Utils.update(
+										model,
+										{error: 'You do not have permission to edit that resource'}),
+									{ctor: '[]'});
+							default:
+								return A2(
+									_elm_lang$core$Platform_Cmd_ops['!'],
+									_elm_lang$core$Native_Utils.update(
+										model,
+										{
+											error: _elm_lang$core$Basics$toString(_p18),
+											failedPosts: failures
+										}),
+									{
+										ctor: '::',
+										_0: _user$project$SaveToStorage$saveFailures(failures),
+										_1: {ctor: '[]'}
+									});
+						}
+					} else {
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							_elm_lang$core$Native_Utils.update(
+								model,
+								{
+									error: _elm_lang$core$Basics$toString(_p18),
+									failedPosts: failures
+								}),
+							{
+								ctor: '::',
+								_0: _user$project$SaveToStorage$saveFailures(failures),
+								_1: {ctor: '[]'}
+							});
+					}
 				}
 			default:
 				return A2(_user$project$ChecklistUpdate$checklistUpdate, msg, model);

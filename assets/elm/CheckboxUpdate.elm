@@ -3,6 +3,7 @@ module CheckboxUpdate exposing (checkboxUpdate)
 import Checkbox exposing (focusElement)
 import ChecklistUpdate exposing (checklistUpdate)
 import DatabaseFailures exposing (..)
+import Http
 import Requests exposing (..)
 import SaveToStorage exposing (..)
 import Types exposing (..)
@@ -271,7 +272,20 @@ checkboxUpdate msg model =
                 failures =
                     addFailure failure model
             in
-            { model | error = "Failed to add the checkbox to the cloud", failedPosts = failures } ! [ saveFailures failures ]
+            case err of
+                Http.BadStatus response ->
+                    case response.status.code of
+                        404 ->
+                            { model | error = "Error adding checkboxes" } ! []
+
+                        401 ->
+                            { model | error = "You do not have permission to edit that resource" } ! []
+
+                        _ ->
+                            { model | error = toString err, failedPosts = failures } ! [ saveFailures failures ]
+
+                _ ->
+                    { model | error = toString err, failedPosts = failures } ! [ saveFailures failures ]
 
         _ ->
             checklistUpdate msg model

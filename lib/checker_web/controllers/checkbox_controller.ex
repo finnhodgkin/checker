@@ -14,7 +14,7 @@ defmodule CheckerWeb.CheckboxController do
       conn
     else
       conn
-      |> redirect(to: checklist_path(conn, :nothing))
+      |> send_resp(401, "")
       |> halt()
     end
   end
