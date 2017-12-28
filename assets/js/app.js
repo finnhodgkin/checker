@@ -14,6 +14,7 @@ const elmDiv = document.getElementById('elm-container');
 const app = Elm.Main.embed(elmDiv, token);
 
 const online = (navigator.onLine && 'online') || 'offline';
+console.log(online);
 
 app.ports.isOnline.send(online);
 
@@ -28,8 +29,32 @@ app.ports.setLists.subscribe(str =>
   window.localStorage.setItem('checklists', JSON.stringify(str))
 );
 
+console.log(window.localStorage.getItem('checklists'));
 app.ports.getChecklists.send(
   JSON.parse(window.localStorage.getItem('checklists'))
+);
+
+app.ports.setCheckboxes.subscribe(str => {
+  const { id } = str;
+  const { checkboxes } = str;
+  console.log(checkboxes, id);
+  window.localStorage.setItem(`checkbox_${id}`, JSON.stringify(checkboxes));
+});
+
+app.ports.getCheckboxes.subscribe(id => {
+  app.ports.sendStoredCheckboxes.send(
+    JSON.parse(window.localStorage.getItem(`checkbox_${id}`))
+  );
+});
+
+app.ports.setFailures.subscribe(str => {
+  window.localStorage.setItem('failures', JSON.stringify(str));
+});
+
+app.ports.getFailures.send(JSON.parse(window.localStorage.getItem('failures')));
+
+app.ports.clearFailures.subscribe(_ =>
+  window.localStorage.removeItem('failures')
 );
 
 if ('serviceWorker' in navigator) {

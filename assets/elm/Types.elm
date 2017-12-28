@@ -121,5 +121,8 @@ type Msg
     | Logout
     | OnlineOffline Online
     | SendFailures Time
-    | BadDecode String
+    | BadListDecode String
+    | BadBoxDecode String
+    | BadFailureDecode String
+    | GetAllFailures (List Failure)
     | NoOp

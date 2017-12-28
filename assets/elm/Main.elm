@@ -30,6 +30,8 @@ subscriptions model =
     Sub.batch
         [ isOnline decodeOnlineOffline
         , getChecklists decodeListChecklist
+        , sendStoredCheckboxes decodeListCheckbox
+        , getFailures decodeListFailures
         ]
 
 
@@ -73,6 +75,18 @@ update msg model =
 
                 Ok () ->
                     model ! []
+
+        BadListDecode error ->
+            { model | error = error } ! []
+
+        BadBoxDecode error ->
+            { model | error = error } ! []
+
+        BadFailureDecode error ->
+            { model | error = error } ! []
+
+        GetAllFailures failures ->
+            { model | failedPosts = failures } ! []
 
         _ ->
             checkboxUpdate msg model

@@ -321,7 +321,32 @@ body,
   margin: 0 auto;
   padding: 0.5rem;
   box-sizing: border-box;
-  transition: all ease 0.3s;
+}
+
+.animate-right {
+  animation: slide-from-right 0.3s ease forwards;
+}
+
+.animate-left {
+  animation: slide-from-right 0.3s ease forwards;
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .create-checkbox {
