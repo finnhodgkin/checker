@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode as Decode
 import PeriodicSend exposing (..)
+import SaveToStorage exposing (clearSavedFailures)
 import Types exposing (..)
 
 
@@ -36,7 +37,7 @@ offlineUpdate msg model =
         OnlineOffline online ->
             case online of
                 Online ->
-                    { model | failedPosts = [], online = Online } ! sendFailures model
+                    { model | failedPosts = [], online = Online } ! (sendFailures model ++ [ clearSavedFailures ])
 
                 Offline ->
                     { model | online = Offline } ! []

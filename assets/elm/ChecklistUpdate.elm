@@ -99,8 +99,5 @@ checklistUpdate msg model =
         ShowLists (Err err) ->
             { model | error = toString err } ! []
 
-        BadDecode error ->
-            { model | error = error } ! []
-
         _ ->
             authenticationUpdate msg model

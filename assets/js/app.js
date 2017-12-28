@@ -29,6 +29,7 @@ app.ports.setLists.subscribe(str =>
   window.localStorage.setItem('checklists', JSON.stringify(str))
 );
 
+console.log(window.localStorage.getItem('checklists'));
 app.ports.getChecklists.send(
   JSON.parse(window.localStorage.getItem('checklists'))
 );
@@ -41,11 +42,20 @@ app.ports.setCheckboxes.subscribe(str => {
 });
 
 app.ports.getCheckboxes.subscribe(id => {
-  console.log(id);
   app.ports.sendStoredCheckboxes.send(
     JSON.parse(window.localStorage.getItem(`checkbox_${id}`))
   );
 });
+
+app.ports.setFailures.subscribe(str => {
+  window.localStorage.setItem('failures', JSON.stringify(str));
+});
+
+app.ports.getFailures.send(JSON.parse(window.localStorage.getItem('failures')));
+
+app.ports.clearFailures.subscribe(_ =>
+  window.localStorage.removeItem('failures')
+);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').then(function() {

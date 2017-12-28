@@ -1,7 +1,7 @@
 port module SaveToStorage exposing (..)
 
 import Json.Decode as JD
-import Json.Encode exposing (Value, bool, int, list, object, string)
+import Json.Encode exposing (Value, bool, int, list, null, object, string)
 import Types exposing (..)
 
 
@@ -18,6 +18,139 @@ port getCheckboxes : Value -> Cmd msg
 
 
 port sendStoredCheckboxes : (Value -> msg) -> Sub msg
+
+
+port getFailures : (Value -> msg) -> Sub msg
+
+
+port setFailures : Value -> Cmd msg
+
+
+port clearFailures : Value -> Cmd msg
+
+
+
+-- Failures
+
+
+clearSavedFailures : Cmd msg
+clearSavedFailures =
+    clearFailures (bool True)
+
+
+decodeListFailures : JD.Value -> Msg
+decodeListFailures failures =
+    let
+        decoded =
+            JD.decodeValue (JD.list failureDecoder) failures
+    in
+    case decoded of
+        Ok value ->
+            GetAllFailures value
+
+        Err error ->
+            BadFailureDecode (toString error)
+
+
+failureDecoder : JD.Decoder Failure
+failureDecoder =
+    JD.oneOf
+        [ JD.at [ "failure" ] (JD.map CheckboxFailure <| decodeCheckUpdate)
+        , JD.at [ "failure" ] (JD.map ChecklistFailure <| decodeChecklistUpdate)
+        ]
+
+
+decodeCheckUpdate : JD.Decoder CheckUpdate
+decodeCheckUpdate =
+    JD.map5
+        CheckUpdate
+        (JD.field "description" (JD.nullable JD.string))
+        (JD.field "checked" JD.bool)
+        (JD.field "id" JD.int)
+        (JD.field "listId" JD.int)
+        (JD.field "command" JD.string
+            |> JD.andThen (\str -> JD.succeed (decodeCommand str))
+        )
+
+
+decodeChecklistUpdate : JD.Decoder ChecklistUpdate
+decodeChecklistUpdate =
+    JD.map3
+        ChecklistUpdate
+        (JD.field "title" (JD.nullable JD.string))
+        (JD.field "id" JD.int)
+        (JD.field "command" JD.string
+            |> JD.andThen (\str -> JD.succeed (decodeCommand str))
+        )
+
+
+decodeCommand : String -> Request
+decodeCommand string =
+    case string of
+        "DELETE" ->
+            DELETE
+
+        "CREATE" ->
+            CREATE
+
+        "EDIT" ->
+            EDIT
+
+        "SAVE" ->
+            SAVE
+
+        _ ->
+            DELETE
+
+
+saveFailures : List Failure -> Cmd msg
+saveFailures failures =
+    setFailures (encodeListFailures failures)
+
+
+encodeListFailures : List Failure -> Value
+encodeListFailures failures =
+    list (List.map encodeFailure failures)
+
+
+encodeFailure : Failure -> Value
+encodeFailure failure =
+    case failure of
+        CheckboxFailure checkbox ->
+            object [ ( "type", string "checkbox" ), ( "failure", encodeCheckboxFailure checkbox ) ]
+
+        ChecklistFailure checklist ->
+            object [ ( "type", string "checklist" ), ( "failure", encodeChecklistFailure checklist ) ]
+
+
+encodeCheckboxFailure : CheckUpdate -> Value
+encodeCheckboxFailure failure =
+    object
+        [ ( "description", encodeTitle failure.description )
+        , ( "checked", bool failure.checked )
+        , ( "id", int failure.id )
+        , ( "listId", int failure.listId )
+        , ( "command", encodeUnion failure.command )
+        ]
+
+
+encodeChecklistFailure : ChecklistUpdate -> Value
+encodeChecklistFailure failure =
+    object
+        [ ( "title", encodeTitle failure.title )
+        , ( "id", int failure.id )
+        , ( "command", encodeUnion failure.command )
+        ]
+
+
+encodeTitle : Maybe String -> Value
+encodeTitle title =
+    case title of
+        Just str ->
+            string str
+
+        Nothing ->
+            null
 
 
 
@@ -40,7 +173,7 @@ decodeListCheckbox checkboxes =
             GetAllCheckboxes (Ok value)
 
         Err error ->
-            BadDecode (toString error)
+            BadBoxDecode (toString error)
 
 
 checkboxDecoder : JD.Decoder Checkbox
@@ -121,7 +254,7 @@ decodeListChecklist checklists =
             ShowLists (Ok value)
 
         Err error ->
-            BadDecode (toString error)
+            BadListDecode (toString error)
 
 
 encodeListChecklist : List Checklist -> Value

@@ -13590,8 +13590,17 @@ var _user$project$Types$NoAnimation = {ctor: 'NoAnimation'};
 var _user$project$Types$Delete = {ctor: 'Delete'};
 var _user$project$Types$Create = {ctor: 'Create'};
 var _user$project$Types$NoOp = {ctor: 'NoOp'};
-var _user$project$Types$BadDecode = function (a) {
-	return {ctor: 'BadDecode', _0: a};
+var _user$project$Types$GetAllFailures = function (a) {
+	return {ctor: 'GetAllFailures', _0: a};
+};
+var _user$project$Types$BadFailureDecode = function (a) {
+	return {ctor: 'BadFailureDecode', _0: a};
+};
+var _user$project$Types$BadBoxDecode = function (a) {
+	return {ctor: 'BadBoxDecode', _0: a};
+};
+var _user$project$Types$BadListDecode = function (a) {
+	return {ctor: 'BadListDecode', _0: a};
 };
 var _user$project$Types$SendFailures = function (a) {
 	return {ctor: 'SendFailures', _0: a};
@@ -14214,6 +14223,498 @@ var _user$project$PeriodicSend$sendFailures = function (model) {
 	return A2(_elm_lang$core$List$map, eachFailure, model.failedPosts);
 };
 
+var _user$project$SaveToStorage$encodeUnion = function (animate) {
+	return _elm_lang$core$Json_Encode$string(
+		_elm_lang$core$Basics$toString(animate));
+};
+var _user$project$SaveToStorage$encodeEditing = function (editing) {
+	var _p0 = editing;
+	if (_p0.ctor === 'Editing') {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'edit',
+					_1: _elm_lang$core$Json_Encode$string(_p0._0)
+				},
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return _elm_lang$core$Json_Encode$string('Set');
+	}
+};
+var _user$project$SaveToStorage$decodeAnimate = function (animate) {
+	var _p1 = animate;
+	switch (_p1) {
+		case 'Create':
+			return _user$project$Types$Create;
+		case 'Delete':
+			return _user$project$Types$Delete;
+		default:
+			return _user$project$Types$NoAnimation;
+	}
+};
+var _user$project$SaveToStorage$decodeStatus = function (status) {
+	var _p2 = status;
+	switch (_p2) {
+		case 'Saved':
+			return _user$project$Types$Saved;
+		case 'Unloaded':
+			return _user$project$Types$Unloaded;
+		default:
+			return _user$project$Types$Unsaved;
+	}
+};
+var _user$project$SaveToStorage$encodeChecklist = function (checklist) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'id',
+				_1: _elm_lang$core$Json_Encode$int(checklist.id)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'title',
+					_1: _elm_lang$core$Json_Encode$string(checklist.title)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'editing',
+						_1: _user$project$SaveToStorage$encodeEditing(checklist.editing)
+					},
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeListChecklist = function (checklists) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeChecklist, checklists));
+};
+var _user$project$SaveToStorage$decodeListChecklist = function (checklists) {
+	var decoded = A2(
+		_elm_lang$core$Json_Decode$decodeValue,
+		_elm_lang$core$Json_Decode$list(
+			A4(
+				_elm_lang$core$Json_Decode$map3,
+				_user$project$Types$Checklist,
+				A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
+				A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+				A2(
+					_elm_lang$core$Json_Decode$field,
+					'editing',
+					_elm_lang$core$Json_Decode$oneOf(
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (str) {
+									return _elm_lang$core$Json_Decode$succeed(
+										_user$project$Types$Editing(str));
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
+								_1: {ctor: '[]'}
+							}
+						})))),
+		checklists);
+	var _p3 = decoded;
+	if (_p3.ctor === 'Ok') {
+		return _user$project$Types$ShowLists(
+			_elm_lang$core$Result$Ok(_p3._0));
+	} else {
+		return _user$project$Types$BadListDecode(
+			_elm_lang$core$Basics$toString(_p3._0));
+	}
+};
+var _user$project$SaveToStorage$encodeCheckbox = function (checkbox) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'description',
+				_1: _elm_lang$core$Json_Encode$string(checkbox.description)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'id',
+					_1: _elm_lang$core$Json_Encode$int(checkbox.id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'checked',
+						_1: _elm_lang$core$Json_Encode$bool(checkbox.checked)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'saved',
+							_1: _user$project$SaveToStorage$encodeUnion(checkbox.saved)
+						},
+						_1: {
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'editing',
+								_1: _user$project$SaveToStorage$encodeEditing(checkbox.editing)
+							},
+							_1: {
+								ctor: '::',
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'animate',
+									_1: _user$project$SaveToStorage$encodeUnion(checkbox.animate)
+								},
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeListCheckbox = function (checkboxes) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeCheckbox, checkboxes));
+};
+var _user$project$SaveToStorage$encodeCheckboxes = F2(
+	function (id, checkboxes) {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'id',
+					_1: _elm_lang$core$Json_Encode$int(id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'checkboxes',
+						_1: _user$project$SaveToStorage$encodeListCheckbox(checkboxes)
+					},
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$SaveToStorage$checkboxDecoder = A7(
+	_elm_lang$core$Json_Decode$map6,
+	_user$project$Types$Checkbox,
+	A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeStatus(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'saved', _elm_lang$core$Json_Decode$string)),
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'editing',
+		_elm_lang$core$Json_Decode$oneOf(
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$core$Json_Decode$andThen,
+					function (str) {
+						return _elm_lang$core$Json_Decode$succeed(
+							_user$project$Types$Editing(str));
+					},
+					A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
+					_1: {ctor: '[]'}
+				}
+			})),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeAnimate(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'animate', _elm_lang$core$Json_Decode$string)));
+var _user$project$SaveToStorage$decodeListCheckbox = function (checkboxes) {
+	var decoded = A2(
+		_elm_lang$core$Json_Decode$decodeValue,
+		_elm_lang$core$Json_Decode$list(_user$project$SaveToStorage$checkboxDecoder),
+		checkboxes);
+	var _p4 = decoded;
+	if (_p4.ctor === 'Ok') {
+		return _user$project$Types$GetAllCheckboxes(
+			_elm_lang$core$Result$Ok(_p4._0));
+	} else {
+		return _user$project$Types$BadBoxDecode(
+			_elm_lang$core$Basics$toString(_p4._0));
+	}
+};
+var _user$project$SaveToStorage$encodeTitle = function (title) {
+	var _p5 = title;
+	if (_p5.ctor === 'Just') {
+		return _elm_lang$core$Json_Encode$string(_p5._0);
+	} else {
+		return _elm_lang$core$Json_Encode$null;
+	}
+};
+var _user$project$SaveToStorage$encodeChecklistFailure = function (failure) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'title',
+				_1: _user$project$SaveToStorage$encodeTitle(failure.title)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'id',
+					_1: _elm_lang$core$Json_Encode$int(failure.id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'command',
+						_1: _user$project$SaveToStorage$encodeUnion(failure.command)
+					},
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeCheckboxFailure = function (failure) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'description',
+				_1: _user$project$SaveToStorage$encodeTitle(failure.description)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'checked',
+					_1: _elm_lang$core$Json_Encode$bool(failure.checked)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'id',
+						_1: _elm_lang$core$Json_Encode$int(failure.id)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'listId',
+							_1: _elm_lang$core$Json_Encode$int(failure.listId)
+						},
+						_1: {
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'command',
+								_1: _user$project$SaveToStorage$encodeUnion(failure.command)
+							},
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeFailure = function (failure) {
+	var _p6 = failure;
+	if (_p6.ctor === 'CheckboxFailure') {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'type',
+					_1: _elm_lang$core$Json_Encode$string('checkbox')
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'failure',
+						_1: _user$project$SaveToStorage$encodeCheckboxFailure(_p6._0)
+					},
+					_1: {ctor: '[]'}
+				}
+			});
+	} else {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'type',
+					_1: _elm_lang$core$Json_Encode$string('checklist')
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'failure',
+						_1: _user$project$SaveToStorage$encodeChecklistFailure(_p6._0)
+					},
+					_1: {ctor: '[]'}
+				}
+			});
+	}
+};
+var _user$project$SaveToStorage$encodeListFailures = function (failures) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeFailure, failures));
+};
+var _user$project$SaveToStorage$decodeCommand = function (string) {
+	var _p7 = string;
+	switch (_p7) {
+		case 'DELETE':
+			return _user$project$Types$DELETE;
+		case 'CREATE':
+			return _user$project$Types$CREATE;
+		case 'EDIT':
+			return _user$project$Types$EDIT;
+		case 'SAVE':
+			return _user$project$Types$SAVE;
+		default:
+			return _user$project$Types$DELETE;
+	}
+};
+var _user$project$SaveToStorage$decodeChecklistUpdate = A4(
+	_elm_lang$core$Json_Decode$map3,
+	_user$project$Types$ChecklistUpdate,
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'title',
+		_elm_lang$core$Json_Decode$nullable(_elm_lang$core$Json_Decode$string)),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeCommand(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'command', _elm_lang$core$Json_Decode$string)));
+var _user$project$SaveToStorage$decodeCheckUpdate = A6(
+	_elm_lang$core$Json_Decode$map5,
+	_user$project$Types$CheckUpdate,
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'description',
+		_elm_lang$core$Json_Decode$nullable(_elm_lang$core$Json_Decode$string)),
+	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'listId', _elm_lang$core$Json_Decode$int),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeCommand(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'command', _elm_lang$core$Json_Decode$string)));
+var _user$project$SaveToStorage$failureDecoder = _elm_lang$core$Json_Decode$oneOf(
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$core$Json_Decode$at,
+			{
+				ctor: '::',
+				_0: 'failure',
+				_1: {ctor: '[]'}
+			},
+			A2(_elm_lang$core$Json_Decode$map, _user$project$Types$CheckboxFailure, _user$project$SaveToStorage$decodeCheckUpdate)),
+		_1: {
+			ctor: '::',
+			_0: A2(
+				_elm_lang$core$Json_Decode$at,
+				{
+					ctor: '::',
+					_0: 'failure',
+					_1: {ctor: '[]'}
+				},
+				A2(_elm_lang$core$Json_Decode$map, _user$project$Types$ChecklistFailure, _user$project$SaveToStorage$decodeChecklistUpdate)),
+			_1: {ctor: '[]'}
+		}
+	});
+var _user$project$SaveToStorage$decodeListFailures = function (failures) {
+	var decoded = A2(
+		_elm_lang$core$Json_Decode$decodeValue,
+		_elm_lang$core$Json_Decode$list(_user$project$SaveToStorage$failureDecoder),
+		failures);
+	var _p8 = decoded;
+	if (_p8.ctor === 'Ok') {
+		return _user$project$Types$GetAllFailures(_p8._0);
+	} else {
+		return _user$project$Types$BadFailureDecode(
+			_elm_lang$core$Basics$toString(_p8._0));
+	}
+};
+var _user$project$SaveToStorage$setLists = _elm_lang$core$Native_Platform.outgoingPort(
+	'setLists',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$getChecklists = _elm_lang$core$Native_Platform.incomingPort('getChecklists', _elm_lang$core$Json_Decode$value);
+var _user$project$SaveToStorage$setCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
+	'setCheckboxes',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$getCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
+	'getCheckboxes',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$fetchCheckboxesFromLS = function (listId) {
+	return _user$project$SaveToStorage$getCheckboxes(
+		_elm_lang$core$Json_Encode$int(listId));
+};
+var _user$project$SaveToStorage$sendStoredCheckboxes = _elm_lang$core$Native_Platform.incomingPort('sendStoredCheckboxes', _elm_lang$core$Json_Decode$value);
+var _user$project$SaveToStorage$getFailures = _elm_lang$core$Native_Platform.incomingPort('getFailures', _elm_lang$core$Json_Decode$value);
+var _user$project$SaveToStorage$setFailures = _elm_lang$core$Native_Platform.outgoingPort(
+	'setFailures',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$saveFailures = function (failures) {
+	return _user$project$SaveToStorage$setFailures(
+		_user$project$SaveToStorage$encodeListFailures(failures));
+};
+var _user$project$SaveToStorage$clearFailures = _elm_lang$core$Native_Platform.outgoingPort(
+	'clearFailures',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$clearSavedFailures = _user$project$SaveToStorage$clearFailures(
+	_elm_lang$core$Json_Encode$bool(true));
+
 var _user$project$Offline$offlineUpdate = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -14228,7 +14729,14 @@ var _user$project$Offline$offlineUpdate = F2(
 							failedPosts: {ctor: '[]'},
 							online: _user$project$Types$Online
 						}),
-					_user$project$PeriodicSend$sendFailures(model));
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_user$project$PeriodicSend$sendFailures(model),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$clearSavedFailures,
+							_1: {ctor: '[]'}
+						}));
 			} else {
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -14962,271 +15470,6 @@ var _user$project$Checklist$getEditString = function (editing) {
 	}
 };
 
-var _user$project$SaveToStorage$encodeUnion = function (animate) {
-	return _elm_lang$core$Json_Encode$string(
-		_elm_lang$core$Basics$toString(animate));
-};
-var _user$project$SaveToStorage$encodeEditing = function (editing) {
-	var _p0 = editing;
-	if (_p0.ctor === 'Editing') {
-		return _elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'edit',
-					_1: _elm_lang$core$Json_Encode$string(_p0._0)
-				},
-				_1: {ctor: '[]'}
-			});
-	} else {
-		return _elm_lang$core$Json_Encode$string('Set');
-	}
-};
-var _user$project$SaveToStorage$decodeAnimate = function (animate) {
-	var _p1 = animate;
-	switch (_p1) {
-		case 'Create':
-			return _user$project$Types$Create;
-		case 'Delete':
-			return _user$project$Types$Delete;
-		default:
-			return _user$project$Types$NoAnimation;
-	}
-};
-var _user$project$SaveToStorage$decodeStatus = function (status) {
-	var _p2 = status;
-	switch (_p2) {
-		case 'Saved':
-			return _user$project$Types$Saved;
-		case 'Unloaded':
-			return _user$project$Types$Unloaded;
-		default:
-			return _user$project$Types$Unsaved;
-	}
-};
-var _user$project$SaveToStorage$encodeChecklist = function (checklist) {
-	return _elm_lang$core$Json_Encode$object(
-		{
-			ctor: '::',
-			_0: {
-				ctor: '_Tuple2',
-				_0: 'id',
-				_1: _elm_lang$core$Json_Encode$int(checklist.id)
-			},
-			_1: {
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'title',
-					_1: _elm_lang$core$Json_Encode$string(checklist.title)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'editing',
-						_1: _user$project$SaveToStorage$encodeEditing(checklist.editing)
-					},
-					_1: {ctor: '[]'}
-				}
-			}
-		});
-};
-var _user$project$SaveToStorage$encodeListChecklist = function (checklists) {
-	return _elm_lang$core$Json_Encode$list(
-		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeChecklist, checklists));
-};
-var _user$project$SaveToStorage$decodeListChecklist = function (checklists) {
-	var decoded = A2(
-		_elm_lang$core$Json_Decode$decodeValue,
-		_elm_lang$core$Json_Decode$list(
-			A4(
-				_elm_lang$core$Json_Decode$map3,
-				_user$project$Types$Checklist,
-				A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
-				A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-				A2(
-					_elm_lang$core$Json_Decode$field,
-					'editing',
-					_elm_lang$core$Json_Decode$oneOf(
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$core$Json_Decode$andThen,
-								function (str) {
-									return _elm_lang$core$Json_Decode$succeed(
-										_user$project$Types$Editing(str));
-								},
-								A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
-								_1: {ctor: '[]'}
-							}
-						})))),
-		checklists);
-	var _p3 = decoded;
-	if (_p3.ctor === 'Ok') {
-		return _user$project$Types$ShowLists(
-			_elm_lang$core$Result$Ok(_p3._0));
-	} else {
-		return _user$project$Types$BadDecode(
-			_elm_lang$core$Basics$toString(_p3._0));
-	}
-};
-var _user$project$SaveToStorage$encodeCheckbox = function (checkbox) {
-	return _elm_lang$core$Json_Encode$object(
-		{
-			ctor: '::',
-			_0: {
-				ctor: '_Tuple2',
-				_0: 'description',
-				_1: _elm_lang$core$Json_Encode$string(checkbox.description)
-			},
-			_1: {
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'id',
-					_1: _elm_lang$core$Json_Encode$int(checkbox.id)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'checked',
-						_1: _elm_lang$core$Json_Encode$bool(checkbox.checked)
-					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'saved',
-							_1: _user$project$SaveToStorage$encodeUnion(checkbox.saved)
-						},
-						_1: {
-							ctor: '::',
-							_0: {
-								ctor: '_Tuple2',
-								_0: 'editing',
-								_1: _user$project$SaveToStorage$encodeEditing(checkbox.editing)
-							},
-							_1: {
-								ctor: '::',
-								_0: {
-									ctor: '_Tuple2',
-									_0: 'animate',
-									_1: _user$project$SaveToStorage$encodeUnion(checkbox.animate)
-								},
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}
-			}
-		});
-};
-var _user$project$SaveToStorage$encodeListCheckbox = function (checkboxes) {
-	return _elm_lang$core$Json_Encode$list(
-		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeCheckbox, checkboxes));
-};
-var _user$project$SaveToStorage$encodeCheckboxes = F2(
-	function (id, checkboxes) {
-		return _elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'id',
-					_1: _elm_lang$core$Json_Encode$int(id)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'checkboxes',
-						_1: _user$project$SaveToStorage$encodeListCheckbox(checkboxes)
-					},
-					_1: {ctor: '[]'}
-				}
-			});
-	});
-var _user$project$SaveToStorage$checkboxDecoder = A7(
-	_elm_lang$core$Json_Decode$map6,
-	_user$project$Types$Checkbox,
-	A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
-	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeStatus(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'saved', _elm_lang$core$Json_Decode$string)),
-	A2(
-		_elm_lang$core$Json_Decode$field,
-		'editing',
-		_elm_lang$core$Json_Decode$oneOf(
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$core$Json_Decode$andThen,
-					function (str) {
-						return _elm_lang$core$Json_Decode$succeed(
-							_user$project$Types$Editing(str));
-					},
-					A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
-					_1: {ctor: '[]'}
-				}
-			})),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeAnimate(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'animate', _elm_lang$core$Json_Decode$string)));
-var _user$project$SaveToStorage$decodeListCheckbox = function (checkboxes) {
-	var decoded = A2(
-		_elm_lang$core$Json_Decode$decodeValue,
-		_elm_lang$core$Json_Decode$list(_user$project$SaveToStorage$checkboxDecoder),
-		checkboxes);
-	var _p4 = decoded;
-	if (_p4.ctor === 'Ok') {
-		return _user$project$Types$GetAllCheckboxes(
-			_elm_lang$core$Result$Ok(_p4._0));
-	} else {
-		return _user$project$Types$BadDecode(
-			_elm_lang$core$Basics$toString(_p4._0));
-	}
-};
-var _user$project$SaveToStorage$setLists = _elm_lang$core$Native_Platform.outgoingPort(
-	'setLists',
-	function (v) {
-		return v;
-	});
-var _user$project$SaveToStorage$getChecklists = _elm_lang$core$Native_Platform.incomingPort('getChecklists', _elm_lang$core$Json_Decode$value);
-var _user$project$SaveToStorage$setCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
-	'setCheckboxes',
-	function (v) {
-		return v;
-	});
-var _user$project$SaveToStorage$getCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
-	'getCheckboxes',
-	function (v) {
-		return v;
-	});
-var _user$project$SaveToStorage$fetchCheckboxesFromLS = function (listId) {
-	return _user$project$SaveToStorage$getCheckboxes(
-		_elm_lang$core$Json_Encode$int(listId));
-};
-var _user$project$SaveToStorage$sendStoredCheckboxes = _elm_lang$core$Native_Platform.incomingPort('sendStoredCheckboxes', _elm_lang$core$Json_Decode$value);
-
 var _user$project$ChecklistUpdate$checklistUpdate = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -15465,13 +15708,6 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 							}),
 						{ctor: '[]'});
 				}
-			case 'BadDecode':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{error: _p0._0}),
-					{ctor: '[]'});
 			default:
 				return A2(_user$project$AuthenticationUpdate$authenticationUpdate, msg, model);
 		}
@@ -15953,6 +16189,7 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 					}();
 					var failure = _user$project$Types$CheckboxFailure(
 						A5(_user$project$Types$CheckUpdate, checkboxDescription, _p14.checked, _p14.id, model.checklist.id, _user$project$Types$EDIT));
+					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
 					var description = function () {
 						var _p13 = _p14.description;
 						if (_p13 === '') {
@@ -15965,11 +16202,12 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{
-								error: 'Failed to change the checkbox in the cloud',
-								failedPosts: A2(_user$project$DatabaseFailures$addFailure, failure, model)
-							}),
-						{ctor: '[]'});
+							{error: 'Failed to change the checkbox in the cloud', failedPosts: failures}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$saveFailures(failures),
+							_1: {ctor: '[]'}
+						});
 				}
 			case 'GetAllCheckboxes':
 				if (_p6._0.ctor === 'Ok') {
@@ -16008,15 +16246,17 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 				} else {
 					var failure = _user$project$Types$CheckboxFailure(
 						A5(_user$project$Types$CheckUpdate, _elm_lang$core$Maybe$Nothing, false, _p6._0, model.checklist.id, _user$project$Types$DELETE));
+					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{
-								error: '',
-								failedPosts: A2(_user$project$DatabaseFailures$addFailure, failure, model)
-							}),
-						{ctor: '[]'});
+							{error: '', failedPosts: failures}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$saveFailures(failures),
+							_1: {ctor: '[]'}
+						});
 				}
 			case 'CreateCheckboxDatabase':
 				if (_p6._2.ctor === 'Ok') {
@@ -16040,15 +16280,17 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 							_p6._0,
 							model.checklist.id,
 							_user$project$Types$CREATE));
+					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{
-								error: 'Failed to add the checkbox to the cloud',
-								failedPosts: A2(_user$project$DatabaseFailures$addFailure, failure, model)
-							}),
-						{ctor: '[]'});
+							{error: 'Failed to add the checkbox to the cloud', failedPosts: failures}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$saveFailures(failures),
+							_1: {ctor: '[]'}
+						});
 				}
 			default:
 				return A2(_user$project$ChecklistUpdate$checklistUpdate, msg, model);
@@ -16388,6 +16630,34 @@ var _user$project$Main$update = F2(
 						model,
 						{ctor: '[]'});
 				}
+			case 'BadListDecode':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{error: _p0._0}),
+					{ctor: '[]'});
+			case 'BadBoxDecode':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{error: _p0._0}),
+					{ctor: '[]'});
+			case 'BadFailureDecode':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{error: _p0._0}),
+					{ctor: '[]'});
+			case 'GetAllFailures':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{failedPosts: _p0._0}),
+					{ctor: '[]'});
 			default:
 				return A2(_user$project$CheckboxUpdate$checkboxUpdate, msg, model);
 		}
@@ -16433,7 +16703,11 @@ var _user$project$Main$subscriptions = function (model) {
 				_1: {
 					ctor: '::',
 					_0: _user$project$SaveToStorage$sendStoredCheckboxes(_user$project$SaveToStorage$decodeListCheckbox),
-					_1: {ctor: '[]'}
+					_1: {
+						ctor: '::',
+						_0: _user$project$SaveToStorage$getFailures(_user$project$SaveToStorage$decodeListFailures),
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});
@@ -16454,7 +16728,7 @@ var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"BadDecode":["String"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"OnlineOffline":["Types.Online"],"UpdateCreateChecklist":["String"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Types.Request":{"args":[],"tags":{"EDIT":[],"CREATE":[],"DELETE":[],"SAVE":[]}},"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Types.Failure":{"args":[],"tags":{"ChecklistFailure":["Types.ChecklistUpdate"],"CheckboxFailure":["Types.CheckUpdate"]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"BadFailureDecode":["String"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"BadBoxDecode":["String"],"OnlineOffline":["Types.Online"],"BadListDecode":["String"],"UpdateCreateChecklist":["String"],"GetAllFailures":["List Types.Failure"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Types.CheckUpdate":{"args":[],"type":"{ description : Maybe.Maybe String , checked : Bool , id : Int , listId : Int , command : Types.Request }"},"Types.ChecklistUpdate":{"args":[],"type":"{ title : Maybe.Maybe String, id : Int, command : Types.Request }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])
