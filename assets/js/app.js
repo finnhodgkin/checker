@@ -2,7 +2,7 @@ const { search } = new URL(window.location.href);
 const token =
   (search && search.split('=')[1]) || window.localStorage.getItem('token');
 
-const failedPosts = window.localStorage.getItem('failed');
+// const failedPosts = window.localStorage.getItem('failed');
 
 if (token) {
   window.localStorage.setItem('token', token);
@@ -31,3 +31,9 @@ app.ports.setLists.subscribe(str =>
 app.ports.getChecklists.send(
   JSON.parse(window.localStorage.getItem('checklists'))
 );
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').then(function() {
+    console.log('Service Worker Registered');
+  });
+}

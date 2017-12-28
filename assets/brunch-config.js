@@ -44,6 +44,12 @@ exports.config = {
     public: '../priv/static'
   },
 
+  modules: {
+    autoRequire: {
+      'js/app.js': ['js/app']
+    }
+  },
+
   // Configure your plugins
   plugins: {
     elmBrunch: {
@@ -53,14 +59,15 @@ exports.config = {
       makeParameters: ['--debug']
     },
     swPrecache: {
-      swFileName: 'service-worker.js',
-      autorequire: [true]
-    }
-  },
-
-  modules: {
-    autoRequire: {
-      'js/app.js': ['js/app']
+      swFileName: '/js/service-worker.js',
+      directoryIndex: '/',
+      options: {
+        stripPrefix: '../priv/static',
+        staticFileGlobs: ['../priv/static/**/*.*'],
+        dynamicUrlToDependencies: {
+          '/': [...glob.sync('../lib/check_web/templates/**/*.eex')]
+        }
+      }
     }
   },
 
