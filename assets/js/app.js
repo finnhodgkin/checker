@@ -32,6 +32,13 @@ app.ports.getChecklists.send(
   JSON.parse(window.localStorage.getItem('checklists'))
 );
 
+app.ports.setCheckbox.subscribe(str =>
+  window.localStorage.setItem('checkboxes', JSON.stringify(str))
+);
+
+app.ports.getCheckboxes.send(
+  JSON.parse(window.localStorage.getItem('checkboxes'))
+);
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').then(function() {
     console.log('Service Worker Registered');
