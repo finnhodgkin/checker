@@ -142,12 +142,21 @@ updateFromDatabase checkbox checkboxes =
     List.map update checkboxes
 
 
+save : Int -> List Checkbox -> Cmd Msg
+save id checkboxes =
+    setCheckboxes (encodeCheckboxes id checkboxes)
+
+
 checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checkboxUpdate msg model =
     case msg of
         Check id ->
-            { model | checks = toggleChecked id model.checks }
-                ! [ checkToggle model.auth.token id (getFlippedChecked id model.checks) ]
+            let
+                checkboxes =
+                    toggleChecked id model.checks
+            in
+            { model | checks = checkboxes }
+                ! [ save model.checklist.id checkboxes, checkToggle model.auth.token id (getFlippedChecked id model.checks) ]
 
         SetEditCheckbox id description set ->
             { model | checks = setEdit id (Editing description) model.checks } ! [ focusElement (toString id) ]
@@ -159,10 +168,18 @@ checkboxUpdate msg model =
             { model | checks = editCheckbox id description model.checks } ! []
 
         SaveEditCheckbox id ->
-            { model | checks = saveEdit id model.checks } ! [ sendEditToDatabase id model ]
+            let
+                checkboxes =
+                    saveEdit id model.checks
+            in
+            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes, sendEditToDatabase id model ]
 
         DeleteCheckbox id description ->
-            { model | checks = deleteCheckbox id model.checks } ! [ deleteCheckboxRequest model.auth.token id ]
+            let
+                checkboxes =
+                    deleteCheckbox id model.checks
+            in
+            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes, deleteCheckboxRequest model.auth.token id ]
 
         UpdateCreateCheckbox createDescription ->
             { model | create = createDescription } ! []
@@ -171,12 +188,19 @@ checkboxUpdate msg model =
             let
                 ( id, newCheckbox ) =
                     createCheckbox model
+
+                checkboxes =
+                    model.checks ++ [ newCheckbox ]
             in
-            { model | checks = model.checks ++ [ newCheckbox ], create = "" }
-                ! [ createCheckboxRequest model.auth.token id model.create False model.checklist.id, focusElement "create" ]
+            { model | checks = checkboxes, create = "" }
+                ! [ save model.checklist.id checkboxes, createCheckboxRequest model.auth.token id model.create False model.checklist.id, focusElement "create" ]
 
         UpdateCheckboxDatabase _ (Ok checkbox) ->
-            { model | checks = updateFromDatabase checkbox model.checks } ! []
+            let
+                checkboxes =
+                    updateFromDatabase checkbox model.checks
+            in
+            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes ]
 
         UpdateCheckboxDatabase check (Err _) ->
             let
@@ -206,7 +230,7 @@ checkboxUpdate msg model =
                 ! []
 
         GetAllCheckboxes (Ok checkboxes) ->
-            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! [ setCheckboxes (encodeCheckboxes model.checklist.id checkboxes) ]
+            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! [ save model.checklist.id checkboxes ]
 
         GetAllCheckboxes (Err _) ->
             { model | error = "", checkboxLoaded = Loaded } ! []
@@ -226,11 +250,12 @@ checkboxUpdate msg model =
             { model | error = "", failedPosts = addFailure failure model } ! []
 
         CreateCheckboxDatabase id description (Ok checkbox) ->
-            { model
-                | checks =
+            let
+                checkboxes =
                     updateCheckbox id checkbox model.checks
-            }
-                ! []
+            in
+            { model | checks = checkboxes }
+                ! [ save model.checklist.id checkboxes ]
 
         CreateCheckboxDatabase id description (Err err) ->
             let
