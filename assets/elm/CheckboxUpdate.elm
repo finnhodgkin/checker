@@ -4,6 +4,7 @@ import Checkbox exposing (focusElement)
 import ChecklistUpdate exposing (checklistUpdate)
 import DatabaseFailures exposing (..)
 import Requests exposing (..)
+import SaveToStorage exposing (..)
 import Types exposing (..)
 
 
@@ -205,10 +206,10 @@ checkboxUpdate msg model =
                 ! []
 
         GetAllCheckboxes (Ok checkboxes) ->
-            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! []
+            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! [ setCheckboxes (encodeCheckboxes model.checklist.id checkboxes) ]
 
         GetAllCheckboxes (Err _) ->
-            { model | error = "Failed to grab saved checkboxes", checkboxLoaded = Empty } ! []
+            { model | error = "Failed to grab saved checkboxes", checkboxLoaded = Loaded } ! []
 
         DeleteCheckboxDatabase id (Ok checkbox) ->
             let

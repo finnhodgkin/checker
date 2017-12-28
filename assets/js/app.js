@@ -14,6 +14,7 @@ const elmDiv = document.getElementById('elm-container');
 const app = Elm.Main.embed(elmDiv, token);
 
 const online = (navigator.onLine && 'online') || 'offline';
+console.log(online);
 
 app.ports.isOnline.send(online);
 
@@ -32,13 +33,20 @@ app.ports.getChecklists.send(
   JSON.parse(window.localStorage.getItem('checklists'))
 );
 
-app.ports.setCheckbox.subscribe(str =>
-  window.localStorage.setItem('checkboxes', JSON.stringify(str))
-);
+app.ports.setCheckboxes.subscribe(str => {
+  const { id } = str;
+  const { checkboxes } = str;
+  console.log(checkboxes, id);
+  window.localStorage.setItem(`checkbox_${id}`, JSON.stringify(checkboxes));
+});
 
-app.ports.getCheckboxes.send(
-  JSON.parse(window.localStorage.getItem('checkboxes'))
-);
+app.ports.getCheckboxes.subscribe(id => {
+  console.log(id);
+  app.ports.sendStoredCheckboxes.send(
+    JSON.parse(window.localStorage.getItem(`checkbox_${id}`))
+  );
+});
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').then(function() {
     console.log('Service Worker Registered');

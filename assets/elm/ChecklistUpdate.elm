@@ -4,7 +4,7 @@ import AuthenticationUpdate exposing (..)
 import Checkbox exposing (focusElement)
 import Checklist exposing (getEditString)
 import Requests exposing (..)
-import SaveToStorage exposing (encodeListChecklist, setLists)
+import SaveToStorage exposing (encodeListChecklist, fetchCheckboxesFromLS, setLists)
 import Types exposing (..)
 
 
@@ -34,7 +34,7 @@ checklistUpdate msg model =
             { model | createChecklist = listName } ! []
 
         SetList checklist ->
-            { model | checklist = checklist, checkboxLoaded = Loading } ! [ fetchInitialData model.auth.token checklist.id ]
+            { model | checklist = checklist, checkboxLoaded = Loading } ! [ fetchCheckboxesFromLS checklist.id, fetchInitialData model.auth.token checklist.id ]
 
         EditChecklist ->
             let
@@ -59,7 +59,7 @@ checklistUpdate msg model =
                 delete check =
                     not (check.id == id)
             in
-            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 Set } ! []
+            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 Set } ! [ setLists (encodeListChecklist (List.filter delete model.checklists)) ]
 
         DeleteChecklistDatabase id (Err err) ->
             { model | error = toString err } ! []
@@ -94,7 +94,7 @@ checklistUpdate msg model =
             { model | error = toString err, checkboxLoaded = Empty } ! []
 
         ShowLists (Ok checklists) ->
-            { model | checklists = checklists, checkboxLoaded = Empty } ! []
+            { model | checklists = checklists, checkboxLoaded = Empty } ! [ setLists (encodeListChecklist checklists) ]
 
         ShowLists (Err err) ->
             { model | error = toString err } ! []

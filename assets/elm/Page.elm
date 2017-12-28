@@ -43,18 +43,6 @@ deleteTitle =
 
 content : Model -> Html Msg
 content model =
-    let
-        translate =
-            case model.checkboxLoaded of
-                Loaded ->
-                    "mobile-container"
-
-                Loading ->
-                    "mobile-container translateY-100"
-
-                Empty ->
-                    "mobile-container translateY-100"
-    in
     if model.auth.token == "" then
         authenticateView model
     else if model.checklist.id == 0 then
@@ -69,7 +57,7 @@ content model =
                     , deleteTitle
                     ]
                 ]
-            , div [ class "overflow-none" ] [ section [ class translate ] [ checkboxes model ] ]
+            , div [ class "overflow-none" ] [ section [ class "mobile-container animate-right" ] [ checkboxes model ] ]
             , createCheckbox model.create
             ]
 

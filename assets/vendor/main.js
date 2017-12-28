@@ -14962,6 +14962,10 @@ var _user$project$Checklist$getEditString = function (editing) {
 	}
 };
 
+var _user$project$SaveToStorage$encodeUnion = function (animate) {
+	return _elm_lang$core$Json_Encode$string(
+		_elm_lang$core$Basics$toString(animate));
+};
 var _user$project$SaveToStorage$encodeEditing = function (editing) {
 	var _p0 = editing;
 	if (_p0.ctor === 'Editing') {
@@ -14977,6 +14981,28 @@ var _user$project$SaveToStorage$encodeEditing = function (editing) {
 			});
 	} else {
 		return _elm_lang$core$Json_Encode$string('Set');
+	}
+};
+var _user$project$SaveToStorage$decodeAnimate = function (animate) {
+	var _p1 = animate;
+	switch (_p1) {
+		case 'Create':
+			return _user$project$Types$Create;
+		case 'Delete':
+			return _user$project$Types$Delete;
+		default:
+			return _user$project$Types$NoAnimation;
+	}
+};
+var _user$project$SaveToStorage$decodeStatus = function (status) {
+	var _p2 = status;
+	switch (_p2) {
+		case 'Saved':
+			return _user$project$Types$Saved;
+		case 'Unloaded':
+			return _user$project$Types$Unloaded;
+		default:
+			return _user$project$Types$Unsaved;
 	}
 };
 var _user$project$SaveToStorage$encodeChecklist = function (checklist) {
@@ -15040,13 +15066,143 @@ var _user$project$SaveToStorage$decodeListChecklist = function (checklists) {
 							}
 						})))),
 		checklists);
-	var _p1 = decoded;
-	if (_p1.ctor === 'Ok') {
+	var _p3 = decoded;
+	if (_p3.ctor === 'Ok') {
 		return _user$project$Types$ShowLists(
-			_elm_lang$core$Result$Ok(_p1._0));
+			_elm_lang$core$Result$Ok(_p3._0));
 	} else {
 		return _user$project$Types$BadDecode(
-			_elm_lang$core$Basics$toString(_p1._0));
+			_elm_lang$core$Basics$toString(_p3._0));
+	}
+};
+var _user$project$SaveToStorage$encodeCheckbox = function (checkbox) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'description',
+				_1: _elm_lang$core$Json_Encode$string(checkbox.description)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'id',
+					_1: _elm_lang$core$Json_Encode$int(checkbox.id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'checked',
+						_1: _elm_lang$core$Json_Encode$bool(checkbox.checked)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'saved',
+							_1: _user$project$SaveToStorage$encodeUnion(checkbox.saved)
+						},
+						_1: {
+							ctor: '::',
+							_0: {
+								ctor: '_Tuple2',
+								_0: 'editing',
+								_1: _user$project$SaveToStorage$encodeEditing(checkbox.editing)
+							},
+							_1: {
+								ctor: '::',
+								_0: {
+									ctor: '_Tuple2',
+									_0: 'animate',
+									_1: _user$project$SaveToStorage$encodeUnion(checkbox.animate)
+								},
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		});
+};
+var _user$project$SaveToStorage$encodeListCheckbox = function (checkboxes) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeCheckbox, checkboxes));
+};
+var _user$project$SaveToStorage$encodeCheckboxes = F2(
+	function (id, checkboxes) {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'id',
+					_1: _elm_lang$core$Json_Encode$int(id)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'checkboxes',
+						_1: _user$project$SaveToStorage$encodeListCheckbox(checkboxes)
+					},
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$SaveToStorage$checkboxDecoder = A7(
+	_elm_lang$core$Json_Decode$map6,
+	_user$project$Types$Checkbox,
+	A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeStatus(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'saved', _elm_lang$core$Json_Decode$string)),
+	A2(
+		_elm_lang$core$Json_Decode$field,
+		'editing',
+		_elm_lang$core$Json_Decode$oneOf(
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$core$Json_Decode$andThen,
+					function (str) {
+						return _elm_lang$core$Json_Decode$succeed(
+							_user$project$Types$Editing(str));
+					},
+					A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
+					_1: {ctor: '[]'}
+				}
+			})),
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				_user$project$SaveToStorage$decodeAnimate(str));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'animate', _elm_lang$core$Json_Decode$string)));
+var _user$project$SaveToStorage$decodeListCheckbox = function (checkboxes) {
+	var decoded = A2(
+		_elm_lang$core$Json_Decode$decodeValue,
+		_elm_lang$core$Json_Decode$list(_user$project$SaveToStorage$checkboxDecoder),
+		checkboxes);
+	var _p4 = decoded;
+	if (_p4.ctor === 'Ok') {
+		return _user$project$Types$GetAllCheckboxes(
+			_elm_lang$core$Result$Ok(_p4._0));
+	} else {
+		return _user$project$Types$BadDecode(
+			_elm_lang$core$Basics$toString(_p4._0));
 	}
 };
 var _user$project$SaveToStorage$setLists = _elm_lang$core$Native_Platform.outgoingPort(
@@ -15055,6 +15211,21 @@ var _user$project$SaveToStorage$setLists = _elm_lang$core$Native_Platform.outgoi
 		return v;
 	});
 var _user$project$SaveToStorage$getChecklists = _elm_lang$core$Native_Platform.incomingPort('getChecklists', _elm_lang$core$Json_Decode$value);
+var _user$project$SaveToStorage$setCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
+	'setCheckboxes',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$getCheckboxes = _elm_lang$core$Native_Platform.outgoingPort(
+	'getCheckboxes',
+	function (v) {
+		return v;
+	});
+var _user$project$SaveToStorage$fetchCheckboxesFromLS = function (listId) {
+	return _user$project$SaveToStorage$getCheckboxes(
+		_elm_lang$core$Json_Encode$int(listId));
+};
+var _user$project$SaveToStorage$sendStoredCheckboxes = _elm_lang$core$Native_Platform.incomingPort('sendStoredCheckboxes', _elm_lang$core$Json_Decode$value);
 
 var _user$project$ChecklistUpdate$checklistUpdate = F2(
 	function (msg, model) {
@@ -15123,8 +15294,12 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 						{checklist: _p2, checkboxLoaded: _user$project$Types$Loading}),
 					{
 						ctor: '::',
-						_0: A2(_user$project$Requests$fetchInitialData, model.auth.token, _p2.id),
-						_1: {ctor: '[]'}
+						_0: _user$project$SaveToStorage$fetchCheckboxesFromLS(_p2.id),
+						_1: {
+							ctor: '::',
+							_0: A2(_user$project$Requests$fetchInitialData, model.auth.token, _p2.id),
+							_1: {ctor: '[]'}
+						}
 					});
 			case 'EditChecklist':
 				var checklist = function (list) {
@@ -15188,7 +15363,13 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 								checklists: A2(_elm_lang$core$List$filter, $delete, model.checklists),
 								checklist: A3(_user$project$Types$Checklist, '', 0, _user$project$Types$Set)
 							}),
-						{ctor: '[]'});
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$setLists(
+								_user$project$SaveToStorage$encodeListChecklist(
+									A2(_elm_lang$core$List$filter, $delete, model.checklists))),
+							_1: {ctor: '[]'}
+						});
 				} else {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
@@ -15262,12 +15443,18 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 				}
 			case 'ShowLists':
 				if (_p0._0.ctor === 'Ok') {
+					var _p5 = _p0._0._0;
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{checklists: _p0._0._0, checkboxLoaded: _user$project$Types$Empty}),
-						{ctor: '[]'});
+							{checklists: _p5, checkboxLoaded: _user$project$Types$Empty}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$setLists(
+								_user$project$SaveToStorage$encodeListChecklist(_p5)),
+							_1: {ctor: '[]'}
+						});
 				} else {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
@@ -15767,18 +15954,24 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 				}
 			case 'GetAllCheckboxes':
 				if (_p6._0.ctor === 'Ok') {
+					var _p15 = _p6._0._0;
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{checks: _p6._0._0, error: '', checkboxLoaded: _user$project$Types$Loaded}),
-						{ctor: '[]'});
+							{checks: _p15, error: '', checkboxLoaded: _user$project$Types$Loaded}),
+						{
+							ctor: '::',
+							_0: _user$project$SaveToStorage$setCheckboxes(
+								A2(_user$project$SaveToStorage$encodeCheckboxes, model.checklist.id, _p15)),
+							_1: {ctor: '[]'}
+						});
 				} else {
 					return A2(
 						_elm_lang$core$Platform_Cmd_ops['!'],
 						_elm_lang$core$Native_Utils.update(
 							model,
-							{error: 'Failed to grab saved checkboxes', checkboxLoaded: _user$project$Types$Empty}),
+							{error: 'Failed to grab saved checkboxes', checkboxLoaded: _user$project$Types$Loaded}),
 						{ctor: '[]'});
 				}
 			case 'DeleteCheckboxDatabase':
@@ -16041,17 +16234,6 @@ var _user$project$Page$editTitle = function (checklist) {
 	}
 };
 var _user$project$Page$content = function (model) {
-	var translate = function () {
-		var _p2 = model.checkboxLoaded;
-		switch (_p2.ctor) {
-			case 'Loaded':
-				return 'mobile-container';
-			case 'Loading':
-				return 'mobile-container translateY-100';
-			default:
-				return 'mobile-container translateY-100';
-		}
-	}();
 	return _elm_lang$core$Native_Utils.eq(model.auth.token, '') ? _user$project$Authentication$authenticateView(model) : (_elm_lang$core$Native_Utils.eq(model.checklist.id, 0) ? _user$project$Checklist$checklists(model) : A2(
 		_elm_lang$html$Html$main_,
 		{ctor: '[]'},
@@ -16107,7 +16289,7 @@ var _user$project$Page$content = function (model) {
 							_elm_lang$html$Html$section,
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class(translate),
+								_0: _elm_lang$html$Html_Attributes$class('mobile-container animate-right'),
 								_1: {ctor: '[]'}
 							},
 							{
@@ -16227,7 +16409,11 @@ var _user$project$Main$subscriptions = function (model) {
 			_1: {
 				ctor: '::',
 				_0: _user$project$SaveToStorage$getChecklists(_user$project$SaveToStorage$decodeListChecklist),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _user$project$SaveToStorage$sendStoredCheckboxes(_user$project$SaveToStorage$decodeListCheckbox),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };

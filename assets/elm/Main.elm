@@ -30,6 +30,7 @@ subscriptions model =
     Sub.batch
         [ isOnline decodeOnlineOffline
         , getChecklists decodeListChecklist
+        , sendStoredCheckboxes decodeListCheckbox
         ]
 
 
