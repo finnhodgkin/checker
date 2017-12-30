@@ -37,23 +37,16 @@ subscriptions model =
 
 init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
+    let
+        model token =
+            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online
+    in
     case authToken of
         Just token ->
-            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online ! [ getLists token ]
+            model token ! [ getLists token ]
 
         Nothing ->
-            Model []
-                ""
-                ""
-                (Checklist "" 0 Set)
-                (Auth "")
-                []
-                ""
-                Unloaded
-                Empty
-                []
-                Online
-                ! []
+            model "" ! []
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

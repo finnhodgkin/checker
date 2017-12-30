@@ -2,7 +2,7 @@ module Offline exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Json.Decode as Decode
+import Json.Decode exposing (Value, decodeValue, string)
 import PeriodicSend exposing (..)
 import SaveToStorage exposing (clearSavedFailures)
 import Types exposing (..)
@@ -18,9 +18,9 @@ online model =
             Html.i [ class "material-icons online-offline" ] [ text "cloud_off" ]
 
 
-decodeOnlineOffline : Decode.Value -> Msg
+decodeOnlineOffline : Value -> Msg
 decodeOnlineOffline isOnline =
-    case Decode.decodeValue Decode.string isOnline of
+    case decodeValue string isOnline of
         Ok "online" ->
             OnlineOffline Online
 

@@ -13794,17 +13794,16 @@ var _user$project$Authentication$authenticateView = function (model) {
 		});
 };
 
-var _user$project$Requests$listDecoder = A4(
-	_elm_lang$core$Json_Decode$map3,
-	_user$project$Types$Checklist,
-	A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-	A2(
+var _user$project$Helpers$decodeStringToUnion = function (typeCaseFunction) {
+	return A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set);
+			return _elm_lang$core$Json_Decode$succeed(
+				typeCaseFunction(str));
 		},
-		A2(_elm_lang$core$Json_Decode$field, 'editing', _elm_lang$core$Json_Decode$string)));
+		_elm_lang$core$Json_Decode$string);
+};
+
 var _user$project$Requests$setSucceed = function (value) {
 	return _elm_lang$core$Json_Decode$andThen(
 		function (_p0) {
@@ -13838,13 +13837,19 @@ var _user$project$Requests$checkboxDecoder = function () {
 			_user$project$Types$Set,
 			A2(_elm_lang$core$Json_Decode$field, 'editing', _elm_lang$core$Json_Decode$bool)),
 		A2(
-			_elm_lang$core$Json_Decode$andThen,
-			function (str) {
-				return _elm_lang$core$Json_Decode$succeed(
-					animate(str));
-			},
-			A2(_elm_lang$core$Json_Decode$field, 'animate', _elm_lang$core$Json_Decode$string)));
+			_elm_lang$core$Json_Decode$field,
+			'animate',
+			_user$project$Helpers$decodeStringToUnion(animate)));
 }();
+var _user$project$Requests$listDecoder = A4(
+	_elm_lang$core$Json_Decode$map3,
+	_user$project$Types$Checklist,
+	A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
+	A2(
+		_user$project$Requests$setSucceed,
+		_user$project$Types$Set,
+		A2(_elm_lang$core$Json_Decode$field, 'editing', _elm_lang$core$Json_Decode$string)));
 var _user$project$Requests$listCheckboxesDecoder = A2(
 	_elm_lang$core$Json_Decode$at,
 	{
@@ -14244,28 +14249,47 @@ var _user$project$SaveToStorage$encodeEditing = function (editing) {
 		return _elm_lang$core$Json_Encode$string('Set');
 	}
 };
-var _user$project$SaveToStorage$decodeAnimate = function (animate) {
-	var _p1 = animate;
-	switch (_p1) {
-		case 'Create':
-			return _user$project$Types$Create;
-		case 'Delete':
-			return _user$project$Types$Delete;
-		default:
-			return _user$project$Types$NoAnimation;
-	}
-};
-var _user$project$SaveToStorage$decodeStatus = function (status) {
-	var _p2 = status;
-	switch (_p2) {
-		case 'Saved':
-			return _user$project$Types$Saved;
-		case 'Unloaded':
-			return _user$project$Types$Unloaded;
-		default:
-			return _user$project$Types$Unsaved;
-	}
-};
+var _user$project$SaveToStorage$decodeAnimate = function () {
+	var animateType = function (animate) {
+		var _p1 = animate;
+		switch (_p1) {
+			case 'Create':
+				return _user$project$Types$Create;
+			case 'Delete':
+				return _user$project$Types$Delete;
+			default:
+				return _user$project$Types$NoAnimation;
+		}
+	};
+	return _user$project$Helpers$decodeStringToUnion(animateType);
+}();
+var _user$project$SaveToStorage$decodeStatus = function () {
+	var statusType = function (status) {
+		var _p2 = status;
+		switch (_p2) {
+			case 'Saved':
+				return _user$project$Types$Saved;
+			case 'Unloaded':
+				return _user$project$Types$Unloaded;
+			default:
+				return _user$project$Types$Unsaved;
+		}
+	};
+	return _user$project$Helpers$decodeStringToUnion(statusType);
+}();
+var _user$project$SaveToStorage$decodeEditing = _elm_lang$core$Json_Decode$oneOf(
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$core$Json_Decode$field,
+			'edit',
+			_user$project$Helpers$decodeStringToUnion(_user$project$Types$Editing)),
+		_1: {
+			ctor: '::',
+			_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
+			_1: {ctor: '[]'}
+		}
+	});
 var _user$project$SaveToStorage$encodeChecklist = function (checklist) {
 	return _elm_lang$core$Json_Encode$object(
 		{
@@ -14307,25 +14331,7 @@ var _user$project$SaveToStorage$decodeListChecklist = function (checklists) {
 				_user$project$Types$Checklist,
 				A2(_elm_lang$core$Json_Decode$field, 'title', _elm_lang$core$Json_Decode$string),
 				A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-				A2(
-					_elm_lang$core$Json_Decode$field,
-					'editing',
-					_elm_lang$core$Json_Decode$oneOf(
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$core$Json_Decode$andThen,
-								function (str) {
-									return _elm_lang$core$Json_Decode$succeed(
-										_user$project$Types$Editing(str));
-								},
-								A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
-								_1: {ctor: '[]'}
-							}
-						})))),
+				A2(_elm_lang$core$Json_Decode$field, 'editing', _user$project$SaveToStorage$decodeEditing))),
 		checklists);
 	var _p3 = decoded;
 	if (_p3.ctor === 'Ok') {
@@ -14419,39 +14425,9 @@ var _user$project$SaveToStorage$checkboxDecoder = A7(
 	A2(_elm_lang$core$Json_Decode$field, 'description', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
 	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeStatus(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'saved', _elm_lang$core$Json_Decode$string)),
-	A2(
-		_elm_lang$core$Json_Decode$field,
-		'editing',
-		_elm_lang$core$Json_Decode$oneOf(
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$core$Json_Decode$andThen,
-					function (str) {
-						return _elm_lang$core$Json_Decode$succeed(
-							_user$project$Types$Editing(str));
-					},
-					A2(_elm_lang$core$Json_Decode$field, 'edit', _elm_lang$core$Json_Decode$string)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$core$Json_Decode$succeed(_user$project$Types$Set),
-					_1: {ctor: '[]'}
-				}
-			})),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeAnimate(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'animate', _elm_lang$core$Json_Decode$string)));
+	A2(_elm_lang$core$Json_Decode$field, 'saved', _user$project$SaveToStorage$decodeStatus),
+	A2(_elm_lang$core$Json_Decode$field, 'editing', _user$project$SaveToStorage$decodeEditing),
+	A2(_elm_lang$core$Json_Decode$field, 'animate', _user$project$SaveToStorage$decodeAnimate));
 var _user$project$SaveToStorage$decodeListCheckbox = function (checkboxes) {
 	var decoded = A2(
 		_elm_lang$core$Json_Decode$decodeValue,
@@ -14592,21 +14568,30 @@ var _user$project$SaveToStorage$encodeListFailures = function (failures) {
 	return _elm_lang$core$Json_Encode$list(
 		A2(_elm_lang$core$List$map, _user$project$SaveToStorage$encodeFailure, failures));
 };
-var _user$project$SaveToStorage$decodeCommand = function (string) {
-	var _p7 = string;
-	switch (_p7) {
-		case 'DELETE':
-			return _user$project$Types$DELETE;
-		case 'CREATE':
-			return _user$project$Types$CREATE;
-		case 'EDIT':
-			return _user$project$Types$EDIT;
-		case 'SAVE':
-			return _user$project$Types$SAVE;
-		default:
-			return _user$project$Types$DELETE;
-	}
-};
+var _user$project$SaveToStorage$decodeCommand = function () {
+	var commandType = function (command) {
+		var _p7 = command;
+		switch (_p7) {
+			case 'DELETE':
+				return _user$project$Types$DELETE;
+			case 'CREATE':
+				return _user$project$Types$CREATE;
+			case 'EDIT':
+				return _user$project$Types$EDIT;
+			case 'SAVE':
+				return _user$project$Types$SAVE;
+			default:
+				return _user$project$Types$DELETE;
+		}
+	};
+	return A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (str) {
+			return _elm_lang$core$Json_Decode$succeed(
+				commandType(str));
+		},
+		_elm_lang$core$Json_Decode$string);
+}();
 var _user$project$SaveToStorage$decodeChecklistUpdate = A4(
 	_elm_lang$core$Json_Decode$map3,
 	_user$project$Types$ChecklistUpdate,
@@ -14615,13 +14600,7 @@ var _user$project$SaveToStorage$decodeChecklistUpdate = A4(
 		'title',
 		_elm_lang$core$Json_Decode$nullable(_elm_lang$core$Json_Decode$string)),
 	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeCommand(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'command', _elm_lang$core$Json_Decode$string)));
+	A2(_elm_lang$core$Json_Decode$field, 'command', _user$project$SaveToStorage$decodeCommand));
 var _user$project$SaveToStorage$decodeCheckUpdate = A6(
 	_elm_lang$core$Json_Decode$map5,
 	_user$project$Types$CheckUpdate,
@@ -14632,13 +14611,7 @@ var _user$project$SaveToStorage$decodeCheckUpdate = A6(
 	A2(_elm_lang$core$Json_Decode$field, 'checked', _elm_lang$core$Json_Decode$bool),
 	A2(_elm_lang$core$Json_Decode$field, 'id', _elm_lang$core$Json_Decode$int),
 	A2(_elm_lang$core$Json_Decode$field, 'listId', _elm_lang$core$Json_Decode$int),
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		function (str) {
-			return _elm_lang$core$Json_Decode$succeed(
-				_user$project$SaveToStorage$decodeCommand(str));
-		},
-		A2(_elm_lang$core$Json_Decode$field, 'command', _elm_lang$core$Json_Decode$string)));
+	A2(_elm_lang$core$Json_Decode$field, 'command', _user$project$SaveToStorage$decodeCommand));
 var _user$project$SaveToStorage$failureDecoder = _elm_lang$core$Json_Decode$oneOf(
 	{
 		ctor: '::',
@@ -15891,10 +15864,146 @@ var _user$project$DatabaseFailures$addFailure = F2(
 		}
 	});
 
+var _user$project$CheckboxUpdate$updateError = F2(
+	function (error, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{error: error});
+	});
+var _user$project$CheckboxUpdate$updateFailedPosts = F2(
+	function (failures, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{failedPosts: failures});
+	});
+var _user$project$CheckboxUpdate$updateLoaded = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{checkboxLoaded: _user$project$Types$Loaded});
+};
+var _user$project$CheckboxUpdate$createCheckboxDatabaseErr_ = F4(
+	function (id, description, err, model) {
+		var failure = _user$project$Types$CheckboxFailure(
+			A5(
+				_user$project$Types$CheckUpdate,
+				_elm_lang$core$Maybe$Just(description),
+				false,
+				id,
+				model.checklist.id,
+				_user$project$Types$CREATE));
+		var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
+		var newModel = function () {
+			var _p0 = err;
+			if (_p0.ctor === 'BadStatus') {
+				var _p1 = _p0._0.status.code;
+				switch (_p1) {
+					case 404:
+						return A2(_user$project$CheckboxUpdate$updateError, 'Error adding checkboxes', model);
+					case 401:
+						return A2(_user$project$CheckboxUpdate$updateError, 'You do not have permission to edit that resource', model);
+					default:
+						return A2(
+							_user$project$CheckboxUpdate$updateFailedPosts,
+							failures,
+							A2(
+								_user$project$CheckboxUpdate$updateError,
+								_elm_lang$core$Basics$toString(err),
+								model));
+				}
+			} else {
+				return A2(
+					_user$project$CheckboxUpdate$updateFailedPosts,
+					failures,
+					A2(
+						_user$project$CheckboxUpdate$updateError,
+						_elm_lang$core$Basics$toString(err),
+						model));
+			}
+		}();
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			newModel,
+			{
+				ctor: '::',
+				_0: _user$project$SaveToStorage$saveFailures(failures),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$CheckboxUpdate$deleteCheckboxDatabaseErr_ = F2(
+	function (id, model) {
+		var failure = _user$project$Types$CheckboxFailure(
+			A5(_user$project$Types$CheckUpdate, _elm_lang$core$Maybe$Nothing, false, id, model.checklist.id, _user$project$Types$DELETE));
+		var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(
+				_user$project$CheckboxUpdate$updateError,
+				'Unable to delete',
+				A2(_user$project$CheckboxUpdate$updateFailedPosts, failures, model)),
+			{
+				ctor: '::',
+				_0: _user$project$SaveToStorage$saveFailures(failures),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$CheckboxUpdate$getAllCheckboxesErr_ = function (model) {
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		_user$project$CheckboxUpdate$updateLoaded(
+			A2(_user$project$CheckboxUpdate$updateError, 'Failed to load checkboxes', model)),
+		{ctor: '[]'});
+};
+var _user$project$CheckboxUpdate$updateCreate = F2(
+	function (create, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{create: create});
+	});
+var _user$project$CheckboxUpdate$updateChecks = F2(
+	function (checkboxes, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{checks: checkboxes});
+	});
+var _user$project$CheckboxUpdate$deleteCheckboxDatabase_ = F2(
+	function (id, model) {
+		var checkboxes = A2(
+			_elm_lang$core$List$filter,
+			function (check) {
+				return !_elm_lang$core$Native_Utils.eq(check.id, id);
+			},
+			model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{ctor: '[]'});
+	});
+var _user$project$CheckboxUpdate$updateCreateCheckbox_ = F2(
+	function (create, model) {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateCreate, create, model),
+			{ctor: '[]'});
+	});
 var _user$project$CheckboxUpdate$save = F2(
 	function (id, checkboxes) {
 		return _user$project$SaveToStorage$setCheckboxes(
 			A2(_user$project$SaveToStorage$encodeCheckboxes, id, checkboxes));
+	});
+var _user$project$CheckboxUpdate$getAllCheckboxes_ = F2(
+	function (checkboxes, model) {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_user$project$CheckboxUpdate$updateLoaded(
+				A2(
+					_user$project$CheckboxUpdate$updateError,
+					'',
+					A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model))),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {ctor: '[]'}
+			});
 	});
 var _user$project$CheckboxUpdate$updateFromDatabase = F2(
 	function (checkbox, checkboxes) {
@@ -15902,6 +16011,18 @@ var _user$project$CheckboxUpdate$updateFromDatabase = F2(
 			return _elm_lang$core$Native_Utils.eq(check.id, checkbox.id) ? checkbox : check;
 		};
 		return A2(_elm_lang$core$List$map, update, checkboxes);
+	});
+var _user$project$CheckboxUpdate$updateCheckboxDatabase_ = F2(
+	function (checkbox, model) {
+		var checkboxes = A2(_user$project$CheckboxUpdate$updateFromDatabase, checkbox, model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {ctor: '[]'}
+			});
 	});
 var _user$project$CheckboxUpdate$deleteCheckbox = F2(
 	function (id, checkboxes) {
@@ -15912,15 +16033,31 @@ var _user$project$CheckboxUpdate$deleteCheckbox = F2(
 			},
 			checkboxes);
 	});
+var _user$project$CheckboxUpdate$deleteCheckbox_ = F3(
+	function (id, description, model) {
+		var checkboxes = A2(_user$project$CheckboxUpdate$deleteCheckbox, id, model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {
+					ctor: '::',
+					_0: A2(_user$project$Requests$deleteCheckboxRequest, model.auth.token, id),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
 var _user$project$CheckboxUpdate$saveEdit = F2(
 	function (id, checkboxes) {
 		var edit = function (cb) {
 			if (_elm_lang$core$Native_Utils.eq(cb.id, id)) {
-				var _p0 = cb.editing;
-				if (_p0.ctor === 'Editing') {
+				var _p2 = cb.editing;
+				if (_p2.ctor === 'Editing') {
 					return _elm_lang$core$Native_Utils.update(
 						cb,
-						{editing: _user$project$Types$Set, description: _p0._0});
+						{editing: _user$project$Types$Set, description: _p2._0});
 				} else {
 					return cb;
 				}
@@ -15937,6 +16074,18 @@ var _user$project$CheckboxUpdate$updateCheckbox = F3(
 		};
 		return A2(_elm_lang$core$List$map, edit, checkboxes);
 	});
+var _user$project$CheckboxUpdate$createCheckboxDatabase_ = F3(
+	function (id, checkbox, model) {
+		var checkboxes = A3(_user$project$CheckboxUpdate$updateCheckbox, id, checkbox, model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {ctor: '[]'}
+			});
+	});
 var _user$project$CheckboxUpdate$editCheckbox = F3(
 	function (id, newDescription, checkboxes) {
 		var edit = function (cb) {
@@ -15949,6 +16098,16 @@ var _user$project$CheckboxUpdate$editCheckbox = F3(
 		};
 		return A2(_elm_lang$core$List$map, edit, checkboxes);
 	});
+var _user$project$CheckboxUpdate$updateEditCheckbox_ = F3(
+	function (id, description, model) {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(
+				_user$project$CheckboxUpdate$updateChecks,
+				A3(_user$project$CheckboxUpdate$editCheckbox, id, description, model.checks),
+				model),
+			{ctor: '[]'});
+	});
 var _user$project$CheckboxUpdate$setEdit = F3(
 	function (id, edit, checkboxes) {
 		var findAndSetEdit = function (cb) {
@@ -15957,6 +16116,35 @@ var _user$project$CheckboxUpdate$setEdit = F3(
 				{editing: edit}) : cb;
 		};
 		return A2(_elm_lang$core$List$map, findAndSetEdit, checkboxes);
+	});
+var _user$project$CheckboxUpdate$setEditCheckbox_ = F3(
+	function (id, description, model) {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(
+				_user$project$CheckboxUpdate$updateChecks,
+				A3(
+					_user$project$CheckboxUpdate$setEdit,
+					id,
+					_user$project$Types$Editing(description),
+					model.checks),
+				model),
+			{
+				ctor: '::',
+				_0: _user$project$Checkbox$focusElement(
+					_elm_lang$core$Basics$toString(id)),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$CheckboxUpdate$cancelEditCheckbox_ = F3(
+	function (id, description, model) {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(
+				_user$project$CheckboxUpdate$updateChecks,
+				A3(_user$project$CheckboxUpdate$setEdit, id, _user$project$Types$Set, model.checks),
+				model),
+			{ctor: '[]'});
 	});
 var _user$project$CheckboxUpdate$findCheckbox = F2(
 	function (id, checkboxes) {
@@ -15970,26 +16158,26 @@ var _user$project$CheckboxUpdate$findCheckbox = F2(
 	});
 var _user$project$CheckboxUpdate$getFlippedChecked = F2(
 	function (id, checkboxes) {
-		var _p1 = A2(_user$project$CheckboxUpdate$findCheckbox, id, checkboxes);
-		if (_p1.ctor === 'Just') {
-			return !_p1._0.checked;
+		var _p3 = A2(_user$project$CheckboxUpdate$findCheckbox, id, checkboxes);
+		if (_p3.ctor === 'Just') {
+			return !_p3._0.checked;
 		} else {
 			return false;
 		}
 	});
 var _user$project$CheckboxUpdate$sendEditToDatabase = F2(
 	function (id, model) {
-		var _p2 = A2(_user$project$CheckboxUpdate$findCheckbox, id, model.checks);
-		if (_p2.ctor === 'Just') {
-			var _p4 = _p2._0;
-			var _p3 = _p4.editing;
-			if (_p3.ctor === 'Editing') {
+		var _p4 = A2(_user$project$CheckboxUpdate$findCheckbox, id, model.checks);
+		if (_p4.ctor === 'Just') {
+			var _p6 = _p4._0;
+			var _p5 = _p6.editing;
+			if (_p5.ctor === 'Editing') {
 				return A3(
 					_user$project$Requests$updateCheckboxDatabase,
 					model.auth.token,
 					_elm_lang$core$Native_Utils.update(
-						_p4,
-						{description: _p3._0}),
+						_p6,
+						{description: _p5._0}),
 					id);
 			} else {
 				return _elm_lang$core$Platform_Cmd$none;
@@ -15998,16 +16186,32 @@ var _user$project$CheckboxUpdate$sendEditToDatabase = F2(
 			return _elm_lang$core$Platform_Cmd$none;
 		}
 	});
+var _user$project$CheckboxUpdate$saveEditCheckbox_ = F2(
+	function (id, model) {
+		var checkboxes = A2(_user$project$CheckboxUpdate$saveEdit, id, model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {
+					ctor: '::',
+					_0: A2(_user$project$CheckboxUpdate$sendEditToDatabase, id, model),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
 var _user$project$CheckboxUpdate$createUniqueCheckboxId = F2(
 	function (id, checkboxes) {
 		createUniqueCheckboxId:
 		while (true) {
-			var _p5 = A2(_user$project$CheckboxUpdate$findCheckbox, id, checkboxes);
-			if (_p5.ctor === 'Just') {
-				var _v5 = id - 1,
-					_v6 = checkboxes;
-				id = _v5;
-				checkboxes = _v6;
+			var _p7 = A2(_user$project$CheckboxUpdate$findCheckbox, id, checkboxes);
+			if (_p7.ctor === 'Just') {
+				var _v7 = id - 1,
+					_v8 = checkboxes;
+				id = _v7;
+				checkboxes = _v8;
 				continue createUniqueCheckboxId;
 			} else {
 				return id;
@@ -16022,6 +16226,79 @@ var _user$project$CheckboxUpdate$createCheckbox = function (model) {
 	var newCheckbox = A6(_user$project$Types$Checkbox, model.create, false, id, _user$project$Types$Unsaved, _user$project$Types$Set, _user$project$Types$Create);
 	return {ctor: '_Tuple2', _0: id, _1: newCheckbox};
 };
+var _user$project$CheckboxUpdate$createCheckbox_ = function (model) {
+	var _p8 = {ctor: '_Tuple3', _0: model.auth.token, _1: model.create, _2: model.checklist.id};
+	var token = _p8._0;
+	var create = _p8._1;
+	var checkId = _p8._2;
+	var _p9 = _user$project$CheckboxUpdate$createCheckbox(model);
+	var id = _p9._0;
+	var newCheckbox = _p9._1;
+	var checkboxes = A2(
+		_elm_lang$core$Basics_ops['++'],
+		model.checks,
+		{
+			ctor: '::',
+			_0: newCheckbox,
+			_1: {ctor: '[]'}
+		});
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		A2(
+			_user$project$CheckboxUpdate$updateCreate,
+			'',
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model)),
+		{
+			ctor: '::',
+			_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+			_1: {
+				ctor: '::',
+				_0: A5(_user$project$Requests$createCheckboxRequest, token, id, create, false, checkId),
+				_1: {
+					ctor: '::',
+					_0: _user$project$Checkbox$focusElement('create'),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
+};
+var _user$project$CheckboxUpdate$updateFailedCheckbox = F2(
+	function (checkbox, model) {
+		var description = function (str) {
+			var _p10 = str;
+			if (_p10 === '') {
+				return _elm_lang$core$Maybe$Nothing;
+			} else {
+				return _elm_lang$core$Maybe$Just(_p10);
+			}
+		};
+		var checkboxDescription = function () {
+			var _p11 = A2(_user$project$CheckboxUpdate$findCheckbox, checkbox.id, model.checks);
+			if (_p11.ctor === 'Just') {
+				return description(_p11._0.description);
+			} else {
+				return _elm_lang$core$Maybe$Nothing;
+			}
+		}();
+		var failure = _user$project$Types$CheckboxFailure(
+			A5(_user$project$Types$CheckUpdate, checkboxDescription, checkbox.checked, checkbox.id, model.checklist.id, _user$project$Types$EDIT));
+		return A2(_user$project$DatabaseFailures$addFailure, failure, model);
+	});
+var _user$project$CheckboxUpdate$updateCheckboxDatabaseErr_ = F2(
+	function (checkbox, model) {
+		var failures = A2(_user$project$CheckboxUpdate$updateFailedCheckbox, checkbox, model);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(
+				_user$project$CheckboxUpdate$updateError,
+				'Failed to change the checkbox in the cloud',
+				A2(_user$project$CheckboxUpdate$updateFailedPosts, failures, model)),
+			{
+				ctor: '::',
+				_0: _user$project$SaveToStorage$saveFailures(failures),
+				_1: {ctor: '[]'}
+			});
+	});
 var _user$project$CheckboxUpdate$toggleChecked = F2(
 	function (id, checkboxes) {
 		var toggle = function (cb) {
@@ -16031,325 +16308,113 @@ var _user$project$CheckboxUpdate$toggleChecked = F2(
 		};
 		return A2(_elm_lang$core$List$map, toggle, checkboxes);
 	});
+var _user$project$CheckboxUpdate$check = F2(
+	function (id, model) {
+		var checkboxes = A2(_user$project$CheckboxUpdate$toggleChecked, id, model.checks);
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			A2(_user$project$CheckboxUpdate$updateChecks, checkboxes, model),
+			{
+				ctor: '::',
+				_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
+				_1: {
+					ctor: '::',
+					_0: A3(
+						_user$project$Requests$checkToggle,
+						model.auth.token,
+						id,
+						A2(_user$project$CheckboxUpdate$getFlippedChecked, id, model.checks)),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
 var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 	function (msg, model) {
-		var _p6 = msg;
-		switch (_p6.ctor) {
+		var _p12 = msg;
+		switch (_p12.ctor) {
 			case 'Check':
-				var _p7 = _p6._0;
-				var checkboxes = A2(_user$project$CheckboxUpdate$toggleChecked, _p7, model.checks);
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{checks: checkboxes}),
-					{
-						ctor: '::',
-						_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-						_1: {
-							ctor: '::',
-							_0: A3(
-								_user$project$Requests$checkToggle,
-								model.auth.token,
-								_p7,
-								A2(_user$project$CheckboxUpdate$getFlippedChecked, _p7, model.checks)),
-							_1: {ctor: '[]'}
-						}
-					});
+				return A2(_user$project$CheckboxUpdate$check, _p12._0, model);
 			case 'SetEditCheckbox':
-				var _p8 = _p6._0;
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							checks: A3(
-								_user$project$CheckboxUpdate$setEdit,
-								_p8,
-								_user$project$Types$Editing(_p6._1),
-								model.checks)
-						}),
-					{
-						ctor: '::',
-						_0: _user$project$Checkbox$focusElement(
-							_elm_lang$core$Basics$toString(_p8)),
-						_1: {ctor: '[]'}
-					});
+				return A3(_user$project$CheckboxUpdate$setEditCheckbox_, _p12._0, _p12._1, model);
 			case 'CancelEditCheckbox':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							checks: A3(_user$project$CheckboxUpdate$setEdit, _p6._0, _user$project$Types$Set, model.checks)
-						}),
-					{ctor: '[]'});
+				return A3(_user$project$CheckboxUpdate$cancelEditCheckbox_, _p12._0, _p12._1, model);
 			case 'UpdateEditCheckbox':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							checks: A3(_user$project$CheckboxUpdate$editCheckbox, _p6._0, _p6._1, model.checks)
-						}),
-					{ctor: '[]'});
+				return A3(_user$project$CheckboxUpdate$updateEditCheckbox_, _p12._0, _p12._1, model);
 			case 'SaveEditCheckbox':
-				var _p9 = _p6._0;
-				var checkboxes = A2(_user$project$CheckboxUpdate$saveEdit, _p9, model.checks);
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{checks: checkboxes}),
-					{
-						ctor: '::',
-						_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-						_1: {
-							ctor: '::',
-							_0: A2(_user$project$CheckboxUpdate$sendEditToDatabase, _p9, model),
-							_1: {ctor: '[]'}
-						}
-					});
+				return A2(_user$project$CheckboxUpdate$saveEditCheckbox_, _p12._0, model);
 			case 'DeleteCheckbox':
-				var _p10 = _p6._0;
-				var checkboxes = A2(_user$project$CheckboxUpdate$deleteCheckbox, _p10, model.checks);
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{checks: checkboxes}),
-					{
-						ctor: '::',
-						_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-						_1: {
-							ctor: '::',
-							_0: A2(_user$project$Requests$deleteCheckboxRequest, model.auth.token, _p10),
-							_1: {ctor: '[]'}
-						}
-					});
+				return A3(_user$project$CheckboxUpdate$deleteCheckbox_, _p12._0, _p12._1, model);
 			case 'UpdateCreateCheckbox':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{create: _p6._0}),
-					{ctor: '[]'});
+				return A2(_user$project$CheckboxUpdate$updateCreateCheckbox_, _p12._0, model);
 			case 'CreateCheckbox':
-				var _p11 = _user$project$CheckboxUpdate$createCheckbox(model);
-				var id = _p11._0;
-				var newCheckbox = _p11._1;
-				var checkboxes = A2(
-					_elm_lang$core$Basics_ops['++'],
-					model.checks,
-					{
-						ctor: '::',
-						_0: newCheckbox,
-						_1: {ctor: '[]'}
-					});
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{checks: checkboxes, create: ''}),
-					{
-						ctor: '::',
-						_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-						_1: {
-							ctor: '::',
-							_0: A5(_user$project$Requests$createCheckboxRequest, model.auth.token, id, model.create, false, model.checklist.id),
-							_1: {
-								ctor: '::',
-								_0: _user$project$Checkbox$focusElement('create'),
-								_1: {ctor: '[]'}
-							}
-						}
-					});
+				return _user$project$CheckboxUpdate$createCheckbox_(model);
 			case 'UpdateCheckboxDatabase':
-				if (_p6._1.ctor === 'Ok') {
-					var checkboxes = A2(_user$project$CheckboxUpdate$updateFromDatabase, _p6._1._0, model.checks);
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{checks: checkboxes}),
-						{
-							ctor: '::',
-							_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-							_1: {ctor: '[]'}
-						});
+				if (_p12._1.ctor === 'Ok') {
+					return A2(_user$project$CheckboxUpdate$updateCheckboxDatabase_, _p12._1._0, model);
 				} else {
-					var _p14 = _p6._0;
-					var checkboxDescription = function () {
-						var _p12 = A2(_user$project$CheckboxUpdate$findCheckbox, _p14.id, model.checks);
-						if (_p12.ctor === 'Just') {
-							return _elm_lang$core$Maybe$Just(_p12._0.description);
-						} else {
-							return _elm_lang$core$Maybe$Nothing;
-						}
-					}();
-					var failure = _user$project$Types$CheckboxFailure(
-						A5(_user$project$Types$CheckUpdate, checkboxDescription, _p14.checked, _p14.id, model.checklist.id, _user$project$Types$EDIT));
-					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
-					var description = function () {
-						var _p13 = _p14.description;
-						if (_p13 === '') {
-							return _elm_lang$core$Maybe$Nothing;
-						} else {
-							return _elm_lang$core$Maybe$Just(_p13);
-						}
-					}();
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{error: 'Failed to change the checkbox in the cloud', failedPosts: failures}),
-						{
-							ctor: '::',
-							_0: _user$project$SaveToStorage$saveFailures(failures),
-							_1: {ctor: '[]'}
-						});
+					return A2(_user$project$CheckboxUpdate$updateCheckboxDatabaseErr_, _p12._0, model);
 				}
 			case 'GetAllCheckboxes':
-				if (_p6._0.ctor === 'Ok') {
-					var _p15 = _p6._0._0;
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{checks: _p15, error: '', checkboxLoaded: _user$project$Types$Loaded}),
-						{
-							ctor: '::',
-							_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, _p15),
-							_1: {ctor: '[]'}
-						});
+				if (_p12._0.ctor === 'Ok') {
+					return A2(_user$project$CheckboxUpdate$getAllCheckboxes_, _p12._0._0, model);
 				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{error: '', checkboxLoaded: _user$project$Types$Loaded}),
-						{ctor: '[]'});
+					return _user$project$CheckboxUpdate$getAllCheckboxesErr_(model);
 				}
 			case 'DeleteCheckboxDatabase':
-				if (_p6._1.ctor === 'Ok') {
-					var $delete = function (check) {
-						return !_elm_lang$core$Native_Utils.eq(check.id, _p6._0);
-					};
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{
-								checks: A2(_elm_lang$core$List$filter, $delete, model.checks)
-							}),
-						{ctor: '[]'});
+				if (_p12._1.ctor === 'Ok') {
+					return A2(_user$project$CheckboxUpdate$deleteCheckboxDatabase_, _p12._0, model);
 				} else {
-					var failure = _user$project$Types$CheckboxFailure(
-						A5(_user$project$Types$CheckUpdate, _elm_lang$core$Maybe$Nothing, false, _p6._0, model.checklist.id, _user$project$Types$DELETE));
-					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{error: '', failedPosts: failures}),
-						{
-							ctor: '::',
-							_0: _user$project$SaveToStorage$saveFailures(failures),
-							_1: {ctor: '[]'}
-						});
+					return A2(_user$project$CheckboxUpdate$deleteCheckboxDatabaseErr_, _p12._0, model);
 				}
 			case 'CreateCheckboxDatabase':
-				if (_p6._2.ctor === 'Ok') {
-					var checkboxes = A3(_user$project$CheckboxUpdate$updateCheckbox, _p6._0, _p6._2._0, model.checks);
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							model,
-							{checks: checkboxes}),
-						{
-							ctor: '::',
-							_0: A2(_user$project$CheckboxUpdate$save, model.checklist.id, checkboxes),
-							_1: {ctor: '[]'}
-						});
+				if (_p12._2.ctor === 'Ok') {
+					return A3(_user$project$CheckboxUpdate$createCheckboxDatabase_, _p12._0, _p12._2._0, model);
 				} else {
-					var _p18 = _p6._2._0;
-					var failure = _user$project$Types$CheckboxFailure(
-						A5(
-							_user$project$Types$CheckUpdate,
-							_elm_lang$core$Maybe$Just(_p6._1),
-							false,
-							_p6._0,
-							model.checklist.id,
-							_user$project$Types$CREATE));
-					var failures = A2(_user$project$DatabaseFailures$addFailure, failure, model);
-					var _p16 = _p18;
-					if (_p16.ctor === 'BadStatus') {
-						var _p17 = _p16._0.status.code;
-						switch (_p17) {
-							case 404:
-								return A2(
-									_elm_lang$core$Platform_Cmd_ops['!'],
-									_elm_lang$core$Native_Utils.update(
-										model,
-										{error: 'Error adding checkboxes'}),
-									{ctor: '[]'});
-							case 401:
-								return A2(
-									_elm_lang$core$Platform_Cmd_ops['!'],
-									_elm_lang$core$Native_Utils.update(
-										model,
-										{error: 'You do not have permission to edit that resource'}),
-									{ctor: '[]'});
-							default:
-								return A2(
-									_elm_lang$core$Platform_Cmd_ops['!'],
-									_elm_lang$core$Native_Utils.update(
-										model,
-										{
-											error: _elm_lang$core$Basics$toString(_p18),
-											failedPosts: failures
-										}),
-									{
-										ctor: '::',
-										_0: _user$project$SaveToStorage$saveFailures(failures),
-										_1: {ctor: '[]'}
-									});
-						}
-					} else {
-						return A2(
-							_elm_lang$core$Platform_Cmd_ops['!'],
-							_elm_lang$core$Native_Utils.update(
-								model,
-								{
-									error: _elm_lang$core$Basics$toString(_p18),
-									failedPosts: failures
-								}),
-							{
-								ctor: '::',
-								_0: _user$project$SaveToStorage$saveFailures(failures),
-								_1: {ctor: '[]'}
-							});
-					}
+					return A4(_user$project$CheckboxUpdate$createCheckboxDatabaseErr_, _p12._0, _p12._1, _p12._2._0, model);
 				}
 			default:
 				return A2(_user$project$ChecklistUpdate$checklistUpdate, msg, model);
 		}
 	});
 
-var _user$project$Page$createCheckbox = function (create) {
-	var submit = _elm_lang$core$Native_Utils.eq(create, '') ? _user$project$Types$Focus('create') : _user$project$Types$CreateCheckbox;
+var _user$project$Page$submitButton = function (submit) {
 	return A2(
-		_elm_lang$html$Html$form,
+		_elm_lang$html$Html$i,
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html_Events$onSubmit(submit),
+			_0: _elm_lang$html$Html_Events$onClick(submit),
 			_1: {
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class('create-checkbox'),
+				_0: _elm_lang$html$Html_Attributes$class('material-icons button--rounded button--left-pad'),
 				_1: {ctor: '[]'}
 			}
 		},
 		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text('add'),
+			_1: {ctor: '[]'}
+		});
+};
+var _user$project$Page$createCheckboxInput = function (create) {
+	return {
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$label,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$for('create-checkbox'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('visually-hidden'),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Add a checkbox'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
 			ctor: '::',
 			_0: A2(
 				_elm_lang$html$Html$input,
@@ -16361,7 +16426,7 @@ var _user$project$Page$createCheckbox = function (create) {
 						_0: _elm_lang$html$Html_Events$onInput(_user$project$Types$UpdateCreateCheckbox),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$id('create'),
+							_0: _elm_lang$html$Html_Attributes$id('create-checkbox'),
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$html$Html_Attributes$class('create-checkbox__input'),
@@ -16379,44 +16444,33 @@ var _user$project$Page$createCheckbox = function (create) {
 					}
 				},
 				{ctor: '[]'}),
+			_1: {ctor: '[]'}
+		}
+	};
+};
+var _user$project$Page$createCheckbox = function (create) {
+	var submit = _elm_lang$core$Native_Utils.eq(create, '') ? _user$project$Types$Focus('create-checkbox') : _user$project$Types$CreateCheckbox;
+	return A2(
+		_elm_lang$html$Html$form,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Events$onSubmit(submit),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$i,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(submit),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('material-icons button--rounded button--left-pad'),
-							_1: {ctor: '[]'}
-						}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('add'),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$label,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('visually-hidden'),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Add a checkbox'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				}
+				_0: _elm_lang$html$Html_Attributes$class('create-checkbox'),
+				_1: {ctor: '[]'}
 			}
-		});
+		},
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_user$project$Page$createCheckboxInput(create),
+			{
+				ctor: '::',
+				_0: _user$project$Page$submitButton(submit),
+				_1: {ctor: '[]'}
+			}));
 };
-var _user$project$Page$deleteTitle = A2(
+var _user$project$Page$checklistDeleteButton = A2(
 	_elm_lang$html$Html$i,
 	{
 		ctor: '::',
@@ -16432,25 +16486,35 @@ var _user$project$Page$deleteTitle = A2(
 		_0: _elm_lang$html$Html$text('delete_forever'),
 		_1: {ctor: '[]'}
 	});
-var _user$project$Page$backButton = A2(
-	_elm_lang$html$Html$i,
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$class('material-icons back-button fade_in'),
-		_1: {
-			ctor: '::',
-			_0: _elm_lang$html$Html_Events$onClick(_user$project$Types$ResetChecklist),
-			_1: {ctor: '[]'}
-		}
-	},
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html$text('chevron_left'),
-		_1: {ctor: '[]'}
-	});
-var _user$project$Page$inputTitle = function (checklist) {
+var _user$project$Page$checklistEditButton = function (checklist) {
 	var _p0 = _user$project$Checklist$getEditString(checklist.editing);
 	if (_p0.ctor === 'Just') {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{ctor: '[]'});
+	} else {
+		return A2(
+			_elm_lang$html$Html$i,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('material-icons checklist-header__button fade_in'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(_user$project$Types$EditChecklist),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('edit'),
+				_1: {ctor: '[]'}
+			});
+	}
+};
+var _user$project$Page$checklistTitle = function (checklist) {
+	var _p1 = _user$project$Checklist$getEditString(checklist.editing);
+	if (_p1.ctor === 'Just') {
 		return A2(
 			_elm_lang$html$Html$form,
 			{
@@ -16483,7 +16547,7 @@ var _user$project$Page$inputTitle = function (checklist) {
 										_0: _elm_lang$html$Html_Attributes$class('checklist-header__input'),
 										_1: {
 											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$value(_p0._0),
+											_0: _elm_lang$html$Html_Attributes$value(_p1._0),
 											_1: {ctor: '[]'}
 										}
 									}
@@ -16509,31 +16573,58 @@ var _user$project$Page$inputTitle = function (checklist) {
 			});
 	}
 };
-var _user$project$Page$editTitle = function (checklist) {
-	var _p1 = _user$project$Checklist$getEditString(checklist.editing);
-	if (_p1.ctor === 'Just') {
-		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
-			{ctor: '[]'});
-	} else {
-		return A2(
-			_elm_lang$html$Html$i,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class('material-icons checklist-header__button fade_in'),
-				_1: {
+var _user$project$Page$backButton = A2(
+	_elm_lang$html$Html$i,
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html_Attributes$class('material-icons back-button fade_in'),
+		_1: {
+			ctor: '::',
+			_0: _elm_lang$html$Html_Events$onClick(_user$project$Types$ResetChecklist),
+			_1: {ctor: '[]'}
+		}
+	},
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html$text('chevron_left'),
+		_1: {ctor: '[]'}
+	});
+var _user$project$Page$checkListHeader = function (checklist) {
+	return A2(
+		_elm_lang$html$Html$header,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('checklist-header'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$section,
+				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Events$onClick(_user$project$Types$EditChecklist),
+					_0: _elm_lang$html$Html_Attributes$class('checklist-header__wrap'),
 					_1: {ctor: '[]'}
-				}
-			},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('edit'),
-				_1: {ctor: '[]'}
-			});
-	}
+				},
+				{
+					ctor: '::',
+					_0: _user$project$Page$backButton,
+					_1: {
+						ctor: '::',
+						_0: _user$project$Page$checklistTitle(checklist),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Page$checklistEditButton(checklist),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Page$checklistDeleteButton,
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		});
 };
 var _user$project$Page$content = function (model) {
 	return _elm_lang$core$Native_Utils.eq(model.auth.token, '') ? _user$project$Authentication$authenticateView(model) : (_elm_lang$core$Native_Utils.eq(model.checklist.id, 0) ? _user$project$Checklist$checklists(model) : A2(
@@ -16541,41 +16632,7 @@ var _user$project$Page$content = function (model) {
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$header,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('checklist-header'),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$section,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('checklist-header__wrap'),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _user$project$Page$backButton,
-							_1: {
-								ctor: '::',
-								_0: _user$project$Page$inputTitle(model.checklist),
-								_1: {
-									ctor: '::',
-									_0: _user$project$Page$editTitle(model.checklist),
-									_1: {
-										ctor: '::',
-										_0: _user$project$Page$deleteTitle,
-										_1: {ctor: '[]'}
-									}
-								}
-							}
-						}),
-					_1: {ctor: '[]'}
-				}),
+			_0: _user$project$Page$checkListHeader(model.checklist),
 			_1: {
 				ctor: '::',
 				_0: A2(
@@ -16702,17 +16759,20 @@ var _user$project$Main$update = F2(
 		}
 	});
 var _user$project$Main$init = function (authToken) {
+	var model = function (token) {
+		return _user$project$Types$Model(
+			{ctor: '[]'})('')('')(
+			A3(_user$project$Types$Checklist, '', 0, _user$project$Types$Set))(
+			_user$project$Types$Auth(token))(
+			{ctor: '[]'})('')(_user$project$Types$Unloaded)(_user$project$Types$Empty)(
+			{ctor: '[]'})(_user$project$Types$Online);
+	};
 	var _p2 = authToken;
 	if (_p2.ctor === 'Just') {
 		var _p3 = _p2._0;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			_user$project$Types$Model(
-				{ctor: '[]'})('')('')(
-				A3(_user$project$Types$Checklist, '', 0, _user$project$Types$Set))(
-				_user$project$Types$Auth(_p3))(
-				{ctor: '[]'})('')(_user$project$Types$Unloaded)(_user$project$Types$Empty)(
-				{ctor: '[]'})(_user$project$Types$Online),
+			model(_p3),
 			{
 				ctor: '::',
 				_0: _user$project$Requests$getLists(_p3),
@@ -16721,12 +16781,7 @@ var _user$project$Main$init = function (authToken) {
 	} else {
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			_user$project$Types$Model(
-				{ctor: '[]'})('')('')(
-				A3(_user$project$Types$Checklist, '', 0, _user$project$Types$Set))(
-				_user$project$Types$Auth(''))(
-				{ctor: '[]'})('')(_user$project$Types$Unloaded)(_user$project$Types$Empty)(
-				{ctor: '[]'})(_user$project$Types$Online),
+			model(''),
 			{ctor: '[]'});
 	}
 };

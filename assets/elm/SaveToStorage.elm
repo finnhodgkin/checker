@@ -1,5 +1,6 @@
 port module SaveToStorage exposing (..)
 
+import Helpers exposing (decodeStringToUnion)
 import Json.Decode as JD
 import Json.Encode exposing (Value, bool, int, list, null, object, string)
 import Types exposing (..)
@@ -38,6 +39,11 @@ clearSavedFailures =
     clearFailures (bool True)
 
 
+saveFailures : List Failure -> Cmd msg
+saveFailures failures =
+    setFailures (encodeListFailures failures)
+
+
 decodeListFailures : JD.Value -> Msg
 decodeListFailures failures =
     let
@@ -68,9 +74,7 @@ decodeCheckUpdate =
         (JD.field "checked" JD.bool)
         (JD.field "id" JD.int)
         (JD.field "listId" JD.int)
-        (JD.field "command" JD.string
-            |> JD.andThen (\str -> JD.succeed (decodeCommand str))
-        )
+        (JD.field "command" decodeCommand)
 
 
 decodeChecklistUpdate : JD.Decoder ChecklistUpdate
@@ -79,33 +83,31 @@ decodeChecklistUpdate =
         ChecklistUpdate
         (JD.field "title" (JD.nullable JD.string))
         (JD.field "id" JD.int)
-        (JD.field "command" JD.string
-            |> JD.andThen (\str -> JD.succeed (decodeCommand str))
-        )
+        (JD.field "command" decodeCommand)
 
 
-decodeCommand : String -> Request
-decodeCommand string =
-    case string of
-        "DELETE" ->
-            DELETE
+decodeCommand : JD.Decoder Request
+decodeCommand =
+    let
+        commandType command =
+            case command of
+                "DELETE" ->
+                    DELETE
 
-        "CREATE" ->
-            CREATE
+                "CREATE" ->
+                    CREATE
 
-        "EDIT" ->
-            EDIT
+                "EDIT" ->
+                    EDIT
 
-        "SAVE" ->
-            SAVE
+                "SAVE" ->
+                    SAVE
 
-        _ ->
-            DELETE
-
-
-saveFailures : List Failure -> Cmd msg
-saveFailures failures =
-    setFailures (encodeListFailures failures)
+                _ ->
+                    DELETE
+    in
+    JD.string
+        |> JD.andThen (\str -> JD.succeed (commandType str))
 
 
 encodeListFailures : List Failure -> Value
@@ -117,10 +119,16 @@ encodeFailure : Failure -> Value
 encodeFailure failure =
     case failure of
         CheckboxFailure checkbox ->
-            object [ ( "type", string "checkbox" ), ( "failure", encodeCheckboxFailure checkbox ) ]
+            object
+                [ ( "type", string "checkbox" )
+                , ( "failure", encodeCheckboxFailure checkbox )
+                ]
 
         ChecklistFailure checklist ->
-            object [ ( "type", string "checklist" ), ( "failure", encodeChecklistFailure checklist ) ]
+            object
+                [ ( "type", string "checklist" )
+                , ( "failure", encodeChecklistFailure checklist )
+                ]
 
 
 encodeCheckboxFailure : CheckUpdate -> Value
@@ -182,20 +190,9 @@ checkboxDecoder =
         (JD.field "description" JD.string)
         (JD.field "checked" JD.bool)
         (JD.field "id" JD.int)
-        (JD.field "saved" JD.string
-            |> JD.andThen (\str -> JD.succeed (decodeStatus str))
-        )
-        (JD.field "editing"
-            (JD.oneOf
-                [ JD.field "edit" JD.string
-                    |> JD.andThen (\str -> JD.succeed (Editing str))
-                , JD.succeed Set
-                ]
-            )
-        )
-        (JD.field "animate" JD.string
-            |> JD.andThen (\str -> JD.succeed (decodeAnimate str))
-        )
+        (JD.field "saved" decodeStatus)
+        (JD.field "editing" decodeEditing)
+        (JD.field "animate" decodeAnimate)
 
 
 encodeCheckboxes : Int -> List Checkbox -> Value
@@ -237,14 +234,7 @@ decodeListChecklist checklists =
                         Checklist
                         (JD.field "title" JD.string)
                         (JD.field "id" JD.int)
-                        (JD.field "editing"
-                            (JD.oneOf
-                                [ JD.field "edit" JD.string
-                                    |> JD.andThen (\str -> JD.succeed (Editing str))
-                                , JD.succeed Set
-                                ]
-                            )
-                        )
+                        (JD.field "editing" decodeEditing)
                     )
                 )
                 checklists
@@ -275,30 +265,46 @@ encodeChecklist checklist =
 -- Shared decoders
 
 
-decodeStatus : String -> Status
-decodeStatus status =
-    case status of
-        "Saved" ->
-            Saved
-
-        "Unloaded" ->
-            Unloaded
-
-        _ ->
-            Unsaved
+decodeEditing : JD.Decoder Editing
+decodeEditing =
+    JD.oneOf
+        [ JD.field "edit" (decodeStringToUnion Editing)
+        , JD.succeed Set
+        ]
 
 
-decodeAnimate : String -> Animate
-decodeAnimate animate =
-    case animate of
-        "Create" ->
-            Create
+decodeStatus : JD.Decoder Status
+decodeStatus =
+    let
+        statusType status =
+            case status of
+                "Saved" ->
+                    Saved
 
-        "Delete" ->
-            Delete
+                "Unloaded" ->
+                    Unloaded
 
-        _ ->
-            NoAnimation
+                _ ->
+                    Unsaved
+    in
+    decodeStringToUnion statusType
+
+
+decodeAnimate : JD.Decoder Animate
+decodeAnimate =
+    let
+        animateType animate =
+            case animate of
+                "Create" ->
+                    Create
+
+                "Delete" ->
+                    Delete
+
+                _ ->
+                    NoAnimation
+    in
+    decodeStringToUnion animateType
 
 
 

@@ -95,7 +95,10 @@ sendEditToDatabase id model =
         Just checkbox ->
             case checkbox.editing of
                 Editing description ->
-                    updateCheckboxDatabase model.auth.token { checkbox | description = description } id
+                    updateCheckboxDatabase
+                        model.auth.token
+                        { checkbox | description = description }
+                        id
 
                 _ ->
                     Cmd.none
@@ -148,144 +151,303 @@ save id checkboxes =
     setCheckboxes (encodeCheckboxes id checkboxes)
 
 
-checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
-checkboxUpdate msg model =
-    case msg of
-        Check id ->
-            let
-                checkboxes =
-                    toggleChecked id model.checks
-            in
-            { model | checks = checkboxes }
-                ! [ save model.checklist.id checkboxes, checkToggle model.auth.token id (getFlippedChecked id model.checks) ]
+check : Int -> Model -> ( Model, Cmd Msg )
+check id model =
+    let
+        checkboxes =
+            toggleChecked id model.checks
+    in
+    updateChecks checkboxes model
+        ! [ save model.checklist.id checkboxes
+          , checkToggle model.auth.token id (getFlippedChecked id model.checks)
+          ]
 
-        SetEditCheckbox id description set ->
-            { model | checks = setEdit id (Editing description) model.checks } ! [ focusElement (toString id) ]
 
-        CancelEditCheckbox id description ->
-            { model | checks = setEdit id Set model.checks } ! []
+setEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
+setEditCheckbox_ id description model =
+    updateChecks (setEdit id (Editing description) model.checks) model
+        ! [ focusElement (toString id) ]
 
-        UpdateEditCheckbox id description ->
-            { model | checks = editCheckbox id description model.checks } ! []
 
-        SaveEditCheckbox id ->
-            let
-                checkboxes =
-                    saveEdit id model.checks
-            in
-            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes, sendEditToDatabase id model ]
+cancelEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
+cancelEditCheckbox_ id description model =
+    updateChecks (setEdit id Set model.checks) model ! []
 
-        DeleteCheckbox id description ->
-            let
-                checkboxes =
-                    deleteCheckbox id model.checks
-            in
-            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes, deleteCheckboxRequest model.auth.token id ]
 
-        UpdateCreateCheckbox createDescription ->
-            { model | create = createDescription } ! []
+updateEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
+updateEditCheckbox_ id description model =
+    updateChecks (editCheckbox id description model.checks) model ! []
 
-        CreateCheckbox ->
-            let
-                ( id, newCheckbox ) =
-                    createCheckbox model
 
-                checkboxes =
-                    model.checks ++ [ newCheckbox ]
-            in
-            { model | checks = checkboxes, create = "" }
-                ! [ save model.checklist.id checkboxes, createCheckboxRequest model.auth.token id model.create False model.checklist.id, focusElement "create" ]
+saveEditCheckbox_ : Int -> Model -> ( Model, Cmd Msg )
+saveEditCheckbox_ id model =
+    let
+        checkboxes =
+            saveEdit id model.checks
+    in
+    updateChecks checkboxes model
+        ! [ save model.checklist.id checkboxes, sendEditToDatabase id model ]
 
-        UpdateCheckboxDatabase _ (Ok checkbox) ->
-            let
-                checkboxes =
-                    updateFromDatabase checkbox model.checks
-            in
-            { model | checks = checkboxes } ! [ save model.checklist.id checkboxes ]
 
-        UpdateCheckboxDatabase check (Err _) ->
-            let
-                description =
-                    case check.description of
-                        "" ->
-                            Nothing
+deleteCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
+deleteCheckbox_ id description model =
+    let
+        checkboxes =
+            deleteCheckbox id model.checks
+    in
+    updateChecks checkboxes model
+        ! [ save model.checklist.id checkboxes
+          , deleteCheckboxRequest model.auth.token id
+          ]
 
-                        description ->
-                            Just description
 
-                checkboxDescription =
-                    case findCheckbox check.id model.checks of
-                        Just checkbox ->
-                            Just checkbox.description
+updateCreateCheckbox_ : String -> Model -> ( Model, Cmd Msg )
+updateCreateCheckbox_ create model =
+    updateCreate create model ! []
 
-                        Nothing ->
-                            Nothing
 
-                failure =
-                    CheckboxFailure (CheckUpdate checkboxDescription check.checked check.id model.checklist.id EDIT)
+createCheckbox_ : Model -> ( Model, Cmd Msg )
+createCheckbox_ model =
+    let
+        ( id, newCheckbox ) =
+            createCheckbox model
 
-                failures =
-                    addFailure failure model
-            in
-            { model
-                | error = "Failed to change the checkbox in the cloud"
-                , failedPosts = failures
-            }
-                ! [ saveFailures failures ]
+        ( token, create, checkId ) =
+            ( model.auth.token, model.create, model.checklist.id )
 
-        GetAllCheckboxes (Ok checkboxes) ->
-            { model | checks = checkboxes, error = "", checkboxLoaded = Loaded } ! [ save model.checklist.id checkboxes ]
+        checkboxes =
+            model.checks ++ [ newCheckbox ]
+    in
+    (model
+        |> updateChecks checkboxes
+        |> updateCreate ""
+    )
+        ! [ save model.checklist.id checkboxes
+          , createCheckboxRequest token id create False checkId
+          , focusElement "create"
+          ]
 
-        GetAllCheckboxes (Err _) ->
-            { model | error = "", checkboxLoaded = Loaded } ! []
 
-        DeleteCheckboxDatabase id (Ok checkbox) ->
-            let
-                delete check =
-                    not (check.id == id)
-            in
-            { model | checks = List.filter delete model.checks } ! []
+updateChecks : List Checkbox -> Model -> Model
+updateChecks checkboxes model =
+    { model | checks = checkboxes }
 
-        DeleteCheckboxDatabase id (Err err) ->
-            let
-                failure =
-                    CheckboxFailure (CheckUpdate Nothing False id model.checklist.id DELETE)
 
-                failures =
-                    addFailure failure model
-            in
-            { model | error = "", failedPosts = failures } ! [ saveFailures failures ]
+updateCreate : String -> Model -> Model
+updateCreate create model =
+    { model | create = create }
 
-        CreateCheckboxDatabase id description (Ok checkbox) ->
-            let
-                checkboxes =
-                    updateCheckbox id checkbox model.checks
-            in
-            { model | checks = checkboxes }
-                ! [ save model.checklist.id checkboxes ]
 
-        CreateCheckboxDatabase id description (Err err) ->
-            let
-                failure =
-                    CheckboxFailure (CheckUpdate (Just description) False id model.checklist.id CREATE)
+updateCheckboxDatabase_ : Checkbox -> Model -> ( Model, Cmd Msg )
+updateCheckboxDatabase_ checkbox model =
+    let
+        checkboxes =
+            updateFromDatabase checkbox model.checks
+    in
+    updateChecks checkboxes model ! [ save model.checklist.id checkboxes ]
 
-                failures =
-                    addFailure failure model
-            in
+
+updateCheckboxDatabaseErr_ : Checkbox -> Model -> ( Model, Cmd Msg )
+updateCheckboxDatabaseErr_ checkbox model =
+    let
+        failures =
+            updateFailedCheckbox checkbox model
+    in
+    (model
+        |> updateFailedPosts failures
+        |> updateError "Failed to change the checkbox in the cloud"
+    )
+        ! [ saveFailures failures ]
+
+
+getAllCheckboxes_ : List Checkbox -> Model -> ( Model, Cmd Msg )
+getAllCheckboxes_ checkboxes model =
+    (model
+        |> updateChecks checkboxes
+        |> updateError ""
+        |> updateLoaded
+    )
+        ! [ save model.checklist.id checkboxes ]
+
+
+getAllCheckboxesErr_ : Model -> ( Model, Cmd Msg )
+getAllCheckboxesErr_ model =
+    (model
+        |> updateError "Failed to load checkboxes"
+        |> updateLoaded
+    )
+        ! []
+
+
+deleteCheckboxDatabase_ : Int -> Model -> ( Model, Cmd Msg )
+deleteCheckboxDatabase_ id model =
+    let
+        checkboxes =
+            List.filter (\check -> not (check.id == id)) model.checks
+    in
+    updateChecks checkboxes model ! []
+
+
+deleteCheckboxDatabaseErr_ : Int -> Model -> ( Model, Cmd Msg )
+deleteCheckboxDatabaseErr_ id model =
+    let
+        failure =
+            CheckboxFailure (CheckUpdate Nothing False id model.checklist.id DELETE)
+
+        failures =
+            addFailure failure model
+    in
+    (model
+        |> updateFailedPosts failures
+        |> updateError "Unable to delete"
+    )
+        ! [ saveFailures failures ]
+
+
+createCheckboxDatabase_ : Int -> Checkbox -> Model -> ( Model, Cmd Msg )
+createCheckboxDatabase_ id checkbox model =
+    let
+        checkboxes =
+            updateCheckbox id checkbox model.checks
+    in
+    (model
+        |> updateChecks checkboxes
+    )
+        ! [ save model.checklist.id checkboxes ]
+
+
+createCheckboxDatabaseErr_ : Int -> String -> Http.Error -> Model -> ( Model, Cmd Msg )
+createCheckboxDatabaseErr_ id description err model =
+    let
+        failure =
+            CheckboxFailure (CheckUpdate (Just description) False id model.checklist.id CREATE)
+
+        failures =
+            addFailure failure model
+
+        newModel =
             case err of
                 Http.BadStatus response ->
                     case response.status.code of
                         404 ->
-                            { model | error = "Error adding checkboxes" } ! []
+                            model
+                                |> updateError "Error adding checkboxes"
 
                         401 ->
-                            { model | error = "You do not have permission to edit that resource" } ! []
+                            model
+                                |> updateError "You do not have permission to edit that resource"
 
                         _ ->
-                            { model | error = toString err, failedPosts = failures } ! [ saveFailures failures ]
+                            model
+                                |> updateError (toString err)
+                                |> updateFailedPosts failures
 
                 _ ->
-                    { model | error = toString err, failedPosts = failures } ! [ saveFailures failures ]
+                    model
+                        |> updateError (toString err)
+                        |> updateFailedPosts failures
+    in
+    newModel ! [ saveFailures failures ]
+
+
+updateLoaded : Model -> Model
+updateLoaded model =
+    { model | checkboxLoaded = Loaded }
+
+
+updateFailedPosts : List Failure -> Model -> Model
+updateFailedPosts failures model =
+    { model | failedPosts = failures }
+
+
+updateError : String -> Model -> Model
+updateError error model =
+    { model | error = error }
+
+
+updateFailedCheckbox : Checkbox -> Model -> List Failure
+updateFailedCheckbox checkbox model =
+    let
+        description : String -> Maybe String
+        description str =
+            case str of
+                "" ->
+                    Nothing
+
+                description ->
+                    Just description
+
+        checkboxDescription : Maybe String
+        checkboxDescription =
+            case findCheckbox checkbox.id model.checks of
+                Just checkbox ->
+                    description checkbox.description
+
+                Nothing ->
+                    Nothing
+
+        failure =
+            CheckboxFailure <|
+                CheckUpdate
+                    checkboxDescription
+                    checkbox.checked
+                    checkbox.id
+                    model.checklist.id
+                    EDIT
+    in
+    addFailure failure model
+
+
+checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
+checkboxUpdate msg model =
+    case msg of
+        Check id ->
+            model |> check id
+
+        SetEditCheckbox id description set ->
+            model |> setEditCheckbox_ id description
+
+        CancelEditCheckbox id description ->
+            model |> cancelEditCheckbox_ id description
+
+        UpdateEditCheckbox id description ->
+            model |> updateEditCheckbox_ id description
+
+        SaveEditCheckbox id ->
+            model |> saveEditCheckbox_ id
+
+        DeleteCheckbox id description ->
+            model |> deleteCheckbox_ id description
+
+        UpdateCreateCheckbox createDescription ->
+            model |> updateCreateCheckbox_ createDescription
+
+        CreateCheckbox ->
+            model |> createCheckbox_
+
+        UpdateCheckboxDatabase _ (Ok checkbox) ->
+            model |> updateCheckboxDatabase_ checkbox
+
+        UpdateCheckboxDatabase checkbox (Err _) ->
+            model |> updateCheckboxDatabaseErr_ checkbox
+
+        GetAllCheckboxes (Ok checkboxes) ->
+            model |> getAllCheckboxes_ checkboxes
+
+        GetAllCheckboxes (Err _) ->
+            model |> getAllCheckboxesErr_
+
+        DeleteCheckboxDatabase id (Ok _) ->
+            model |> deleteCheckboxDatabase_ id
+
+        DeleteCheckboxDatabase id (Err _) ->
+            model |> deleteCheckboxDatabaseErr_ id
+
+        CreateCheckboxDatabase id _ (Ok checkbox) ->
+            model |> createCheckboxDatabase_ id checkbox
+
+        CreateCheckboxDatabase id description (Err err) ->
+            model |> createCheckboxDatabaseErr_ id description err
 
         _ ->
             checklistUpdate msg model

@@ -1,5 +1,6 @@
 module Requests exposing (..)
 
+import Helpers exposing (..)
 import Http
 import Json.Decode as Decode exposing (Decoder, bool, dict, field, int, string)
 import Json.Encode as JE exposing (Value, bool, int)
@@ -325,11 +326,13 @@ checkboxDecoder =
         (field "description" Decode.string)
         (field "checked" Decode.bool)
         (field "id" Decode.int)
-        (field "saved" Decode.bool |> setSucceed Saved)
-        (field "editing" Decode.bool |> setSucceed Set)
-        (field "animate" Decode.string
-            |> Decode.andThen (\str -> Decode.succeed (animate str))
+        (field "saved" Decode.bool
+            |> setSucceed Saved
         )
+        (field "editing" Decode.bool
+            |> setSucceed Set
+        )
+        (field "animate" (decodeStringToUnion animate))
 
 
 listDecoder : Decoder Checklist
@@ -338,4 +341,6 @@ listDecoder =
         Checklist
         (field "title" Decode.string)
         (field "id" Decode.int)
-        (field "editing" Decode.string |> Decode.andThen (\str -> Decode.succeed Set))
+        (field "editing" Decode.string
+            |> setSucceed Set
+        )
