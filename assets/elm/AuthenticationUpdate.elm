@@ -1,5 +1,6 @@
 port module AuthenticationUpdate exposing (authenticationUpdate)
 
+import Helpers exposing (setNoAuth)
 import Offline exposing (offlineUpdate)
 import Types exposing (..)
 
@@ -11,7 +12,7 @@ authenticationUpdate : Msg -> Model -> ( Model, Cmd Msg )
 authenticationUpdate msg model =
     case msg of
         Logout ->
-            { model | auth = Auth "" } ! [ logOut True ]
+            (model |> setNoAuth) ! [ logOut True ]
 
         _ ->
             offlineUpdate msg model

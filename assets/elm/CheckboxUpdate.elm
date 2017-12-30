@@ -176,7 +176,7 @@ getAllCheckboxes_ checkboxes model =
     (model
         |> updateChecks checkboxes
         |> updateError ""
-        |> updateLoaded
+        |> updateLoadLoaded
     )
         ! [ save model.checklist.id checkboxes ]
 
@@ -185,7 +185,7 @@ getAllCheckboxesErr_ : Model -> ( Model, Cmd Msg )
 getAllCheckboxesErr_ model =
     (model
         |> updateError "Failed to load checkboxes"
-        |> updateLoaded
+        |> updateLoadLoaded
     )
         ! []
 
@@ -259,35 +259,6 @@ createCheckboxDatabaseErr_ id description err model =
                         |> updateFailedPosts failures
     in
     newModel ! [ saveFailures failures ]
-
-
-
--- Model update helpers
-
-
-updateChecks : List Checkbox -> Model -> Model
-updateChecks checkboxes model =
-    { model | checks = checkboxes }
-
-
-updateCreate : String -> Model -> Model
-updateCreate create model =
-    { model | create = create }
-
-
-updateLoaded : Model -> Model
-updateLoaded model =
-    { model | checkboxLoaded = Loaded }
-
-
-updateFailedPosts : List Failure -> Model -> Model
-updateFailedPosts failures model =
-    { model | failedPosts = failures }
-
-
-updateError : String -> Model -> Model
-updateError error model =
-    { model | error = error }
 
 
 

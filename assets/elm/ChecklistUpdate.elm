@@ -3,101 +3,199 @@ module ChecklistUpdate exposing (checklistUpdate)
 import AuthenticationUpdate exposing (..)
 import Checkbox exposing (focusElement)
 import Checklist exposing (getEditString)
+import Helpers exposing (..)
 import Requests exposing (..)
 import SaveToStorage exposing (encodeListChecklist, fetchCheckboxesFromLS, setLists)
 import Types exposing (..)
+
+
+cmdNone : Model -> ( Model, Cmd Msg )
+cmdNone model =
+    model ! []
+
+
+cmd : Model -> ( Model, List (Cmd Msg) )
+cmd model =
+    ( model, [] )
+
+
+cmdSend : ( Model, List (Cmd Msg) ) -> ( Model, Cmd Msg )
+cmdSend modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    model ! cmd
+
+
+cmdCreateChecklist : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdCreateChecklist modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    ( model, cmd ++ [ createChecklist model.auth.token model.createChecklist ] )
+
+
+cmdSetLists : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdSetLists modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    ( model, cmd ++ [ setLists (encodeListChecklist model.checklists) ] )
+
+
+cmdFetchFromBoth : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdFetchFromBoth modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    ( model
+    , cmd ++ [ fetchCheckboxesFromLS model.checklist.id, fetchInitialData model.auth.token model.checklist.id ]
+    )
+
+
+cmdFocus : String -> ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdFocus string modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    ( model, cmd ++ [ focusElement string ] )
+
+
+cmdDeleteList : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdDeleteList modelCmd =
+    let
+        ( model, cmd ) =
+            modelCmd
+    in
+    ( model, cmd ++ [ deleteChecklist model ] )
 
 
 checklistUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checklistUpdate msg model =
     case msg of
         CreateChecklist ->
-            { model | createChecklist = "", checklist = Checklist model.createChecklist 1 Set, savedChecklist = Unsaved } ! [ createChecklist model.auth.token model.createChecklist ]
+            model
+                |> updateCreateList ""
+                |> updateList (Checklist model.createChecklist 1 Set)
+                |> updateListStatus Unsaved
+                |> cmd
+                |> cmdCreateChecklist
+                |> cmdSend
 
         CreateChecklistDatabase (Ok checklist) ->
-            let
-                checklists =
-                    model.checklists ++ [ checklist ]
-            in
-            { model
-                | checklist = checklist
-                , checklists = checklists
-                , savedChecklist = Saved
-                , checkboxLoaded = Loaded
-            }
-                ! [ setLists (encodeListChecklist checklists) ]
+            model
+                |> updateList checklist
+                |> updateLists (model.checklists ++ [ checklist ])
+                |> updateListStatus Saved
+                |> updateCheckboxLoaded Loaded
+                |> cmd
+                |> cmdSetLists
+                |> cmdSend
 
         CreateChecklistDatabase (Err err) ->
-            { model | error = toString err } ! []
+            model
+                |> updateError (toString err)
+                |> cmdNone
 
         UpdateCreateChecklist listName ->
-            { model | createChecklist = listName } ! []
+            model
+                |> updateCreateList listName
+                |> cmdNone
 
         SetList checklist ->
-            { model | checklist = checklist, checkboxLoaded = Loading } ! [ fetchCheckboxesFromLS checklist.id, fetchInitialData model.auth.token checklist.id ]
+            model
+                |> updateList checklist
+                |> updateCheckboxLoaded Loading
+                |> cmd
+                |> cmdFetchFromBoth
+                |> cmdSend
 
         EditChecklist ->
-            let
-                checklist : Checklist -> Checklist
-                checklist list =
-                    { list | editing = Editing list.title }
-            in
-            { model | checklist = checklist model.checklist } ! [ focusElement "title-input" ]
+            model
+                |> updateList (startListEdit model.checklist)
+                |> cmd
+                |> cmdFocus "title-input"
+                |> cmdSend
 
         UpdateChecklist newTitle ->
-            let
-                checklist list =
-                    { list | editing = Editing newTitle }
-            in
-            { model | checklist = checklist model.checklist } ! []
+            model
+                |> updateList (updateListEditing newTitle model.checklist)
+                |> cmdNone
 
         DeleteChecklist ->
-            { model | checks = [] } ! [ deleteChecklist model ]
+            model
+                |> updateChecks []
+                |> cmd
+                |> cmdDeleteList
+                |> cmdSend
 
         DeleteChecklistDatabase id (Ok checklist) ->
-            let
-                delete check =
-                    not (check.id == id)
-            in
-            { model | checklists = List.filter delete model.checklists, checklist = Checklist "" 0 Set } ! [ setLists (encodeListChecklist (List.filter delete model.checklists)) ]
+            model
+                |> updateLists (deleteById id model.checklists)
+                |> updateList (Checklist "" 0 Set)
+                |> cmd
+                |> cmdSetLists
+                |> cmdSend
 
         DeleteChecklistDatabase id (Err err) ->
-            { model | error = toString err } ! []
+            model
+                |> updateError (toString err)
+                |> cmdNone
 
         ResetChecklist ->
-            { model | checklist = Checklist "" 0 Set, checks = [], checkboxLoaded = Empty } ! []
+            model
+                |> updateList (Checklist "" 0 Set)
+                |> updateChecks []
+                |> updateCheckboxLoaded Empty
+                |> cmdNone
 
         SetChecklist ->
             let
-                edited list =
+                setIfEditing list =
                     case getEditString model.checklist.editing of
                         Just str ->
-                            { list | editing = Set, title = str }
+                            ( { list | editing = Set, title = str }
+                            , updateChecklist model.auth.token model.checklist
+                            )
 
                         Nothing ->
-                            list
+                            ( list
+                            , Cmd.none
+                            )
 
-                update =
-                    case getEditString model.checklist.editing of
-                        Just _ ->
-                            updateChecklist model.auth.token model.checklist
-
-                        Nothing ->
-                            Cmd.none
+                ( list, update ) =
+                    setIfEditing model.checklist
             in
-            { model | checklist = edited model.checklist } ! [ update ]
+            (model |> updateList list) ! [ update ]
 
         UpdateChecklistDatabase (Ok checklist) ->
-            { model | checklist = checklist } ! []
+            model
+                |> updateList checklist
+                |> cmdNone
 
         UpdateChecklistDatabase (Err err) ->
-            { model | error = toString err, checkboxLoaded = Empty } ! []
+            model
+                |> updateError (toString err)
+                |> updateCheckboxLoaded Empty
+                |> cmdNone
 
         ShowLists (Ok checklists) ->
-            { model | checklists = checklists, checkboxLoaded = Empty } ! [ setLists (encodeListChecklist checklists) ]
+            model
+                |> updateLists checklists
+                |> updateCheckboxLoaded Empty
+                |> cmd
+                |> cmdSetLists
+                |> cmdSend
 
         ShowLists (Err err) ->
-            { model | error = toString err } ! []
+            model
+                |> updateError (toString err)
+                |> cmdNone
 
         _ ->
             authenticationUpdate msg model
