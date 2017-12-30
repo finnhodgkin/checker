@@ -3,156 +3,77 @@ module CheckboxUpdate exposing (checkboxUpdate)
 import Checkbox exposing (focusElement)
 import ChecklistUpdate exposing (checklistUpdate)
 import DatabaseFailures exposing (..)
+import Helpers exposing (..)
 import Http
 import Requests exposing (..)
 import SaveToStorage exposing (..)
 import Types exposing (..)
 
 
-toggleChecked : Int -> List Checkbox -> List Checkbox
-toggleChecked id checkboxes =
-    let
-        toggle cb =
-            if cb.id == id then
-                { cb | checked = not cb.checked }
-            else
-                cb
-    in
-    List.map toggle checkboxes
+-- Update
 
 
-findCheckbox : Int -> List Checkbox -> Maybe Checkbox
-findCheckbox id checkboxes =
-    List.head (List.filter (\checkbox -> checkbox.id == id) checkboxes)
+checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
+checkboxUpdate msg model =
+    case msg of
+        Check id ->
+            model |> check_ id
+
+        SetEditCheckbox id description set ->
+            model |> setEditCheckbox_ id description
+
+        CancelEditCheckbox id description ->
+            model |> cancelEditCheckbox_ id description
+
+        UpdateEditCheckbox id description ->
+            model |> updateEditCheckbox_ id description
+
+        SaveEditCheckbox id ->
+            model |> saveEditCheckbox_ id
+
+        DeleteCheckbox id description ->
+            model |> deleteCheckbox_ id description
+
+        UpdateCreateCheckbox createDescription ->
+            model |> updateCreateCheckbox_ createDescription
+
+        CreateCheckbox ->
+            model |> createCheckbox_
+
+        UpdateCheckboxDatabase _ (Ok checkbox) ->
+            model |> updateCheckboxDatabase_ checkbox
+
+        UpdateCheckboxDatabase checkbox (Err _) ->
+            model |> updateCheckboxDatabaseErr_ checkbox
+
+        GetAllCheckboxes (Ok checkboxes) ->
+            model |> getAllCheckboxes_ checkboxes
+
+        GetAllCheckboxes (Err _) ->
+            model |> getAllCheckboxesErr_
+
+        DeleteCheckboxDatabase id (Ok _) ->
+            model |> deleteCheckboxDatabase_ id
+
+        DeleteCheckboxDatabase id (Err _) ->
+            model |> deleteCheckboxDatabaseErr_ id
+
+        CreateCheckboxDatabase id _ (Ok checkbox) ->
+            model |> createCheckboxDatabase_ id checkbox
+
+        CreateCheckboxDatabase id description (Err err) ->
+            model |> createCheckboxDatabaseErr_ id description err
+
+        _ ->
+            checklistUpdate msg model
 
 
-getFlippedChecked : Int -> List Checkbox -> Bool
-getFlippedChecked id checkboxes =
-    case findCheckbox id checkboxes of
-        Just checkbox ->
-            not checkbox.checked
 
-        Nothing ->
-            False
+-- Update functions
 
 
-setEdit : Int -> Editing -> List Checkbox -> List Checkbox
-setEdit id edit checkboxes =
-    let
-        findAndSetEdit cb =
-            if cb.id == id then
-                { cb | editing = edit }
-            else
-                cb
-    in
-    List.map findAndSetEdit checkboxes
-
-
-editCheckbox : Int -> String -> List Checkbox -> List Checkbox
-editCheckbox id newDescription checkboxes =
-    let
-        edit cb =
-            if cb.id == id then
-                { cb | editing = Editing newDescription, saved = Unsaved }
-            else
-                cb
-    in
-    List.map edit checkboxes
-
-
-updateCheckbox : Int -> Checkbox -> List Checkbox -> List Checkbox
-updateCheckbox id checkbox checkboxes =
-    let
-        edit cb =
-            if cb.id == id then
-                checkbox
-            else
-                cb
-    in
-    List.map edit checkboxes
-
-
-saveEdit : Int -> List Checkbox -> List Checkbox
-saveEdit id checkboxes =
-    let
-        edit cb =
-            if cb.id == id then
-                case cb.editing of
-                    Editing description ->
-                        { cb | editing = Set, description = description }
-
-                    _ ->
-                        cb
-            else
-                cb
-    in
-    List.map edit checkboxes
-
-
-sendEditToDatabase : Int -> Model -> Cmd Msg
-sendEditToDatabase id model =
-    case findCheckbox id model.checks of
-        Just checkbox ->
-            case checkbox.editing of
-                Editing description ->
-                    updateCheckboxDatabase
-                        model.auth.token
-                        { checkbox | description = description }
-                        id
-
-                _ ->
-                    Cmd.none
-
-        Nothing ->
-            Cmd.none
-
-
-deleteCheckbox : Int -> List Checkbox -> List Checkbox
-deleteCheckbox id checkboxes =
-    List.filter (\cb -> cb.id /= id) checkboxes
-
-
-createCheckbox : Model -> ( Int, Checkbox )
-createCheckbox model =
-    let
-        id =
-            createUniqueCheckboxId (List.length model.checks * -1) model.checks
-
-        newCheckbox =
-            Checkbox model.create False id Unsaved Set Create
-    in
-    ( id, newCheckbox )
-
-
-createUniqueCheckboxId : Int -> List Checkbox -> Int
-createUniqueCheckboxId id checkboxes =
-    case findCheckbox id checkboxes of
-        Just _ ->
-            createUniqueCheckboxId (id - 1) checkboxes
-
-        Nothing ->
-            id
-
-
-updateFromDatabase : Checkbox -> List Checkbox -> List Checkbox
-updateFromDatabase checkbox checkboxes =
-    let
-        update check =
-            if check.id == checkbox.id then
-                checkbox
-            else
-                check
-    in
-    List.map update checkboxes
-
-
-save : Int -> List Checkbox -> Cmd Msg
-save id checkboxes =
-    setCheckboxes (encodeCheckboxes id checkboxes)
-
-
-check : Int -> Model -> ( Model, Cmd Msg )
-check id model =
+check_ : Int -> Model -> ( Model, Cmd Msg )
+check_ id model =
     let
         checkboxes =
             toggleChecked id model.checks
@@ -228,16 +149,6 @@ createCheckbox_ model =
           ]
 
 
-updateChecks : List Checkbox -> Model -> Model
-updateChecks checkboxes model =
-    { model | checks = checkboxes }
-
-
-updateCreate : String -> Model -> Model
-updateCreate create model =
-    { model | create = create }
-
-
 updateCheckboxDatabase_ : Checkbox -> Model -> ( Model, Cmd Msg )
 updateCheckboxDatabase_ checkbox model =
     let
@@ -251,7 +162,7 @@ updateCheckboxDatabaseErr_ : Checkbox -> Model -> ( Model, Cmd Msg )
 updateCheckboxDatabaseErr_ checkbox model =
     let
         failures =
-            updateFailedCheckbox checkbox model
+            buildFailedCheckboxEdit checkbox model
     in
     (model
         |> updateFailedPosts failures
@@ -350,6 +261,20 @@ createCheckboxDatabaseErr_ id description err model =
     newModel ! [ saveFailures failures ]
 
 
+
+-- Model update helpers
+
+
+updateChecks : List Checkbox -> Model -> Model
+updateChecks checkboxes model =
+    { model | checks = checkboxes }
+
+
+updateCreate : String -> Model -> Model
+updateCreate create model =
+    { model | create = create }
+
+
 updateLoaded : Model -> Model
 updateLoaded model =
     { model | checkboxLoaded = Loaded }
@@ -365,8 +290,149 @@ updateError error model =
     { model | error = error }
 
 
-updateFailedCheckbox : Checkbox -> Model -> List Failure
-updateFailedCheckbox checkbox model =
+
+-- Helpers
+
+
+toggleChecked : Int -> List Checkbox -> List Checkbox
+toggleChecked id checkboxes =
+    let
+        toggle cb =
+            if cb.id == id then
+                { cb | checked = not cb.checked }
+            else
+                cb
+    in
+    List.map toggle checkboxes
+
+
+getFlippedChecked : Int -> List Checkbox -> Bool
+getFlippedChecked id checkboxes =
+    case findById id checkboxes of
+        Just checkbox ->
+            not checkbox.checked
+
+        Nothing ->
+            False
+
+
+setEdit : Int -> Editing -> List Checkbox -> List Checkbox
+setEdit id edit checkboxes =
+    let
+        findAndSetEdit cb =
+            if cb.id == id then
+                { cb | editing = edit }
+            else
+                cb
+    in
+    List.map findAndSetEdit checkboxes
+
+
+editCheckbox : Int -> String -> List Checkbox -> List Checkbox
+editCheckbox id newDescription checkboxes =
+    let
+        edit cb =
+            if cb.id == id then
+                { cb | editing = Editing newDescription, saved = Unsaved }
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
+updateCheckbox : Int -> Checkbox -> List Checkbox -> List Checkbox
+updateCheckbox id checkbox checkboxes =
+    let
+        edit cb =
+            if cb.id == id then
+                checkbox
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
+saveEdit : Int -> List Checkbox -> List Checkbox
+saveEdit id checkboxes =
+    let
+        edit cb =
+            if cb.id == id then
+                case cb.editing of
+                    Editing description ->
+                        { cb | editing = Set, description = description }
+
+                    _ ->
+                        cb
+            else
+                cb
+    in
+    List.map edit checkboxes
+
+
+sendEditToDatabase : Int -> Model -> Cmd Msg
+sendEditToDatabase id model =
+    case findById id model.checks of
+        Just checkbox ->
+            case checkbox.editing of
+                Editing description ->
+                    updateCheckboxDatabase
+                        model.auth.token
+                        { checkbox | description = description }
+                        id
+
+                _ ->
+                    Cmd.none
+
+        Nothing ->
+            Cmd.none
+
+
+deleteCheckbox : Int -> List Checkbox -> List Checkbox
+deleteCheckbox id checkboxes =
+    List.filter (\cb -> cb.id /= id) checkboxes
+
+
+createCheckbox : Model -> ( Int, Checkbox )
+createCheckbox model =
+    let
+        id =
+            createUniqueCheckboxId (List.length model.checks * -1) model.checks
+
+        newCheckbox =
+            Checkbox model.create False id Unsaved Set Create
+    in
+    ( id, newCheckbox )
+
+
+createUniqueCheckboxId : Int -> List Checkbox -> Int
+createUniqueCheckboxId id checkboxes =
+    case findById id checkboxes of
+        Just _ ->
+            createUniqueCheckboxId (id - 1) checkboxes
+
+        Nothing ->
+            id
+
+
+updateFromDatabase : Checkbox -> List Checkbox -> List Checkbox
+updateFromDatabase checkbox checkboxes =
+    let
+        update check =
+            if check.id == checkbox.id then
+                checkbox
+            else
+                check
+    in
+    List.map update checkboxes
+
+
+save : Int -> List Checkbox -> Cmd Msg
+save id checkboxes =
+    setCheckboxes (encodeCheckboxes id checkboxes)
+
+
+buildFailedCheckboxEdit : Checkbox -> Model -> List Failure
+buildFailedCheckboxEdit checkbox model =
     let
         description : String -> Maybe String
         description str =
@@ -379,7 +445,7 @@ updateFailedCheckbox checkbox model =
 
         checkboxDescription : Maybe String
         checkboxDescription =
-            case findCheckbox checkbox.id model.checks of
+            case findById checkbox.id model.checks of
                 Just checkbox ->
                     description checkbox.description
 
@@ -396,58 +462,3 @@ updateFailedCheckbox checkbox model =
                     EDIT
     in
     addFailure failure model
-
-
-checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
-checkboxUpdate msg model =
-    case msg of
-        Check id ->
-            model |> check id
-
-        SetEditCheckbox id description set ->
-            model |> setEditCheckbox_ id description
-
-        CancelEditCheckbox id description ->
-            model |> cancelEditCheckbox_ id description
-
-        UpdateEditCheckbox id description ->
-            model |> updateEditCheckbox_ id description
-
-        SaveEditCheckbox id ->
-            model |> saveEditCheckbox_ id
-
-        DeleteCheckbox id description ->
-            model |> deleteCheckbox_ id description
-
-        UpdateCreateCheckbox createDescription ->
-            model |> updateCreateCheckbox_ createDescription
-
-        CreateCheckbox ->
-            model |> createCheckbox_
-
-        UpdateCheckboxDatabase _ (Ok checkbox) ->
-            model |> updateCheckboxDatabase_ checkbox
-
-        UpdateCheckboxDatabase checkbox (Err _) ->
-            model |> updateCheckboxDatabaseErr_ checkbox
-
-        GetAllCheckboxes (Ok checkboxes) ->
-            model |> getAllCheckboxes_ checkboxes
-
-        GetAllCheckboxes (Err _) ->
-            model |> getAllCheckboxesErr_
-
-        DeleteCheckboxDatabase id (Ok _) ->
-            model |> deleteCheckboxDatabase_ id
-
-        DeleteCheckboxDatabase id (Err _) ->
-            model |> deleteCheckboxDatabaseErr_ id
-
-        CreateCheckboxDatabase id _ (Ok checkbox) ->
-            model |> createCheckboxDatabase_ id checkbox
-
-        CreateCheckboxDatabase id description (Err err) ->
-            model |> createCheckboxDatabaseErr_ id description err
-
-        _ ->
-            checklistUpdate msg model
