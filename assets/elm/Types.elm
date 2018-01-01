@@ -31,7 +31,12 @@ type Failure
 
 
 type alias CheckUpdate =
-    { description : Maybe String, checked : Bool, id : Int, listId : Int, command : Request }
+    { description : Maybe String
+    , checked : Bool
+    , id : Int
+    , listId : Int
+    , command : Request
+    }
 
 
 type alias ChecklistUpdate =
