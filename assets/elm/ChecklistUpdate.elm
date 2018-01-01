@@ -3,76 +3,11 @@ module ChecklistUpdate exposing (checklistUpdate)
 import AuthenticationUpdate exposing (..)
 import Checkbox exposing (focusElement)
 import Checklist exposing (getEditString)
+import CommandHelpers exposing (..)
 import Helpers exposing (..)
 import Requests exposing (..)
 import SaveToStorage exposing (encodeListChecklist, fetchCheckboxesFromLS, setLists)
 import Types exposing (..)
-
-
-cmdNone : Model -> ( Model, Cmd Msg )
-cmdNone model =
-    model ! []
-
-
-cmd : Model -> ( Model, List (Cmd Msg) )
-cmd model =
-    ( model, [] )
-
-
-cmdSend : ( Model, List (Cmd Msg) ) -> ( Model, Cmd Msg )
-cmdSend modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    model ! cmd
-
-
-cmdCreateChecklist : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdCreateChecklist modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    ( model, cmd ++ [ createChecklist model.auth.token model.createChecklist ] )
-
-
-cmdSetLists : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdSetLists modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    ( model, cmd ++ [ setLists (encodeListChecklist model.checklists) ] )
-
-
-cmdFetchFromBoth : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdFetchFromBoth modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    ( model
-    , cmd ++ [ fetchCheckboxesFromLS model.checklist.id, fetchInitialData model.auth.token model.checklist.id ]
-    )
-
-
-cmdFocus : String -> ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdFocus string modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    ( model, cmd ++ [ focusElement string ] )
-
-
-cmdDeleteList : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdDeleteList modelCmd =
-    let
-        ( model, cmd ) =
-            modelCmd
-    in
-    ( model, cmd ++ [ deleteChecklist model ] )
 
 
 checklistUpdate : Msg -> Model -> ( Model, Cmd Msg )

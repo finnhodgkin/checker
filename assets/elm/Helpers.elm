@@ -13,14 +13,26 @@ decodeStringToUnion typeCaseFunction =
         |> JD.andThen (\str -> JD.succeed (typeCaseFunction str))
 
 
-findById : Int -> List { b | id : Int } -> Maybe { b | id : Int }
+findById : Int -> List { a | id : Int } -> Maybe { a | id : Int }
 findById id list =
     List.head (List.filter (\item -> item.id == id) list)
 
 
-deleteById : Int -> List { b | id : Int } -> List { b | id : Int }
-deleteById id lists =
-    List.filter (\list -> not <| list.id == id) lists
+deleteById : Int -> List { a | id : Int } -> List { a | id : Int }
+deleteById id list =
+    List.filter (\item -> not <| item.id == id) list
+
+
+updateById : { a | id : Int } -> List { a | id : Int } -> List { a | id : Int }
+updateById newItem list =
+    let
+        update item =
+            if item.id == newItem.id then
+                newItem
+            else
+                item
+    in
+    List.map update list
 
 
 
@@ -116,3 +128,17 @@ startListEdit list =
 updateListEditing : String -> Checklist -> Checklist
 updateListEditing editString list =
     { list | editing = Editing editString }
+
+
+
+-- Online
+
+
+updateOnline : Model -> Model
+updateOnline model =
+    { model | online = Online }
+
+
+updateOffline : Model -> Model
+updateOffline model =
+    { model | online = Offline }

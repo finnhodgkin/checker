@@ -31,6 +31,15 @@ port clearFailures : Value -> Cmd msg
 
 
 
+-- Helpers
+
+
+save : Int -> List Checkbox -> Cmd Msg
+save id checkboxes =
+    setCheckboxes (encodeCheckboxes id checkboxes)
+
+
+
 -- Failures
 
 

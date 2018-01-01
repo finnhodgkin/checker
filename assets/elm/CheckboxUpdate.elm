@@ -1,12 +1,22 @@
 module CheckboxUpdate exposing (checkboxUpdate)
 
-import Checkbox exposing (focusElement)
 import ChecklistUpdate exposing (checklistUpdate)
+import CommandHelpers
+    exposing
+        ( cmd
+        , cmdCheckToggle
+        , cmdCreateCheckboxDatabase
+        , cmdDeleteCheckboxRequest
+        , cmdFocus
+        , cmdNone
+        , cmdSaveChecks
+        , cmdSaveFailedPosts
+        , cmdSend
+        , cmdSendEditToDatabase
+        )
 import DatabaseFailures exposing (..)
 import Helpers exposing (..)
 import Http
-import Requests exposing (..)
-import SaveToStorage exposing (..)
 import Types exposing (..)
 
 
@@ -17,248 +27,165 @@ checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checkboxUpdate msg model =
     case msg of
         Check id ->
-            model |> check_ id
+            model
+                |> updateChecks (toggleChecked id model.checks)
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdCheckToggle id
+                |> cmdSend
 
-        SetEditCheckbox id description set ->
-            model |> setEditCheckbox_ id description
+        SetEditCheckbox id description _ ->
+            model
+                |> updateChecks (setEdit id (Editing description) model.checks)
+                |> cmd
+                |> cmdFocus (toString id)
+                |> cmdSend
 
-        CancelEditCheckbox id description ->
-            model |> cancelEditCheckbox_ id description
+        CancelEditCheckbox id _ ->
+            model
+                |> updateChecks (setEdit id Set model.checks)
+                |> cmdNone
 
         UpdateEditCheckbox id description ->
-            model |> updateEditCheckbox_ id description
+            model
+                |> updateChecks (editCheckbox id description model.checks)
+                |> cmdNone
 
         SaveEditCheckbox id ->
-            model |> saveEditCheckbox_ id
+            model
+                |> updateChecks (saveEdit id model.checks)
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdSendEditToDatabase id
+                |> cmdSend
 
         DeleteCheckbox id description ->
-            model |> deleteCheckbox_ id description
+            model
+                |> updateChecks (deleteById id model.checks)
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdDeleteCheckboxRequest id
+                |> cmdSend
 
         UpdateCreateCheckbox createDescription ->
-            model |> updateCreateCheckbox_ createDescription
+            model
+                |> updateCreate createDescription
+                |> cmdNone
 
         CreateCheckbox ->
-            model |> createCheckbox_
+            let
+                ( id, newCheckbox ) =
+                    createCheckbox model
+
+                create =
+                    model.create
+            in
+            model
+                |> updateChecks (model.checks ++ [ newCheckbox ])
+                |> updateCreate ""
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdCreateCheckboxDatabase id create
+                |> cmdFocus "create"
+                |> cmdSend
 
         UpdateCheckboxDatabase _ (Ok checkbox) ->
-            model |> updateCheckboxDatabase_ checkbox
+            model
+                |> updateChecks (updateById checkbox model.checks)
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdSend
 
         UpdateCheckboxDatabase checkbox (Err _) ->
-            model |> updateCheckboxDatabaseErr_ checkbox
+            model
+                |> updateFailedPosts (buildFailedCheckboxEdit checkbox model)
+                |> updateError "Failed to change the checkbox in the cloud"
+                |> cmd
+                |> cmdSaveFailedPosts
+                |> cmdSend
 
         GetAllCheckboxes (Ok checkboxes) ->
-            model |> getAllCheckboxes_ checkboxes
+            model
+                |> updateChecks checkboxes
+                |> updateError ""
+                |> updateLoadLoaded
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdSend
 
         GetAllCheckboxes (Err _) ->
-            model |> getAllCheckboxesErr_
+            model
+                |> updateError "Failed to load checkboxes"
+                |> updateLoadLoaded
+                |> cmdNone
 
         DeleteCheckboxDatabase id (Ok _) ->
-            model |> deleteCheckboxDatabase_ id
+            model
+                |> updateChecks (deleteById id model.checks)
+                |> cmdNone
 
         DeleteCheckboxDatabase id (Err _) ->
-            model |> deleteCheckboxDatabaseErr_ id
+            model
+                |> updateFailedPosts (addFailure (failedDelete id model.checklist.id) model)
+                |> updateError "Unable to delete"
+                |> cmd
+                |> cmdSaveFailedPosts
+                |> cmdSend
 
         CreateCheckboxDatabase id _ (Ok checkbox) ->
-            model |> createCheckboxDatabase_ id checkbox
+            model
+                |> updateChecks (updateCheckbox id checkbox model.checks)
+                |> cmd
+                |> cmdSaveChecks
+                |> cmdSend
 
         CreateCheckboxDatabase id description (Err err) ->
-            model |> createCheckboxDatabaseErr_ id description err
+            model
+                |> handleResponseError err id description
+                |> cmd
+                |> cmdSaveFailedPosts
+                |> cmdSend
 
         _ ->
             checklistUpdate msg model
 
 
-
--- Update functions
-
-
-check_ : Int -> Model -> ( Model, Cmd Msg )
-check_ id model =
-    let
-        checkboxes =
-            toggleChecked id model.checks
-    in
-    updateChecks checkboxes model
-        ! [ save model.checklist.id checkboxes
-          , checkToggle model.auth.token id (getFlippedChecked id model.checks)
-          ]
+failedDelete : Int -> Int -> Failure
+failedDelete checkId listId =
+    CheckboxFailure (CheckUpdate Nothing False checkId listId DELETE)
 
 
-setEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
-setEditCheckbox_ id description model =
-    updateChecks (setEdit id (Editing description) model.checks) model
-        ! [ focusElement (toString id) ]
+failedCreate : Int -> Int -> String -> Failure
+failedCreate checkId listId description =
+    CheckboxFailure (CheckUpdate (Just description) False checkId listId CREATE)
 
 
-cancelEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
-cancelEditCheckbox_ id description model =
-    updateChecks (setEdit id Set model.checks) model ! []
-
-
-updateEditCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
-updateEditCheckbox_ id description model =
-    updateChecks (editCheckbox id description model.checks) model ! []
-
-
-saveEditCheckbox_ : Int -> Model -> ( Model, Cmd Msg )
-saveEditCheckbox_ id model =
-    let
-        checkboxes =
-            saveEdit id model.checks
-    in
-    updateChecks checkboxes model
-        ! [ save model.checklist.id checkboxes, sendEditToDatabase id model ]
-
-
-deleteCheckbox_ : Int -> String -> Model -> ( Model, Cmd Msg )
-deleteCheckbox_ id description model =
-    let
-        checkboxes =
-            deleteCheckbox id model.checks
-    in
-    updateChecks checkboxes model
-        ! [ save model.checklist.id checkboxes
-          , deleteCheckboxRequest model.auth.token id
-          ]
-
-
-updateCreateCheckbox_ : String -> Model -> ( Model, Cmd Msg )
-updateCreateCheckbox_ create model =
-    updateCreate create model ! []
-
-
-createCheckbox_ : Model -> ( Model, Cmd Msg )
-createCheckbox_ model =
-    let
-        ( id, newCheckbox ) =
-            createCheckbox model
-
-        ( token, create, checkId ) =
-            ( model.auth.token, model.create, model.checklist.id )
-
-        checkboxes =
-            model.checks ++ [ newCheckbox ]
-    in
-    (model
-        |> updateChecks checkboxes
-        |> updateCreate ""
-    )
-        ! [ save model.checklist.id checkboxes
-          , createCheckboxRequest token id create False checkId
-          , focusElement "create"
-          ]
-
-
-updateCheckboxDatabase_ : Checkbox -> Model -> ( Model, Cmd Msg )
-updateCheckboxDatabase_ checkbox model =
-    let
-        checkboxes =
-            updateFromDatabase checkbox model.checks
-    in
-    updateChecks checkboxes model ! [ save model.checklist.id checkboxes ]
-
-
-updateCheckboxDatabaseErr_ : Checkbox -> Model -> ( Model, Cmd Msg )
-updateCheckboxDatabaseErr_ checkbox model =
+handleResponseError : Http.Error -> Int -> String -> Model -> Model
+handleResponseError err id description model =
     let
         failures =
-            buildFailedCheckboxEdit checkbox model
+            addFailure (failedCreate id model.checklist.id description) model
     in
-    (model
-        |> updateFailedPosts failures
-        |> updateError "Failed to change the checkbox in the cloud"
-    )
-        ! [ saveFailures failures ]
+    case err of
+        Http.BadStatus response ->
+            case response.status.code of
+                404 ->
+                    model
+                        |> updateError "Error adding checkboxes"
 
-
-getAllCheckboxes_ : List Checkbox -> Model -> ( Model, Cmd Msg )
-getAllCheckboxes_ checkboxes model =
-    (model
-        |> updateChecks checkboxes
-        |> updateError ""
-        |> updateLoadLoaded
-    )
-        ! [ save model.checklist.id checkboxes ]
-
-
-getAllCheckboxesErr_ : Model -> ( Model, Cmd Msg )
-getAllCheckboxesErr_ model =
-    (model
-        |> updateError "Failed to load checkboxes"
-        |> updateLoadLoaded
-    )
-        ! []
-
-
-deleteCheckboxDatabase_ : Int -> Model -> ( Model, Cmd Msg )
-deleteCheckboxDatabase_ id model =
-    let
-        checkboxes =
-            List.filter (\check -> not (check.id == id)) model.checks
-    in
-    updateChecks checkboxes model ! []
-
-
-deleteCheckboxDatabaseErr_ : Int -> Model -> ( Model, Cmd Msg )
-deleteCheckboxDatabaseErr_ id model =
-    let
-        failure =
-            CheckboxFailure (CheckUpdate Nothing False id model.checklist.id DELETE)
-
-        failures =
-            addFailure failure model
-    in
-    (model
-        |> updateFailedPosts failures
-        |> updateError "Unable to delete"
-    )
-        ! [ saveFailures failures ]
-
-
-createCheckboxDatabase_ : Int -> Checkbox -> Model -> ( Model, Cmd Msg )
-createCheckboxDatabase_ id checkbox model =
-    let
-        checkboxes =
-            updateCheckbox id checkbox model.checks
-    in
-    (model
-        |> updateChecks checkboxes
-    )
-        ! [ save model.checklist.id checkboxes ]
-
-
-createCheckboxDatabaseErr_ : Int -> String -> Http.Error -> Model -> ( Model, Cmd Msg )
-createCheckboxDatabaseErr_ id description err model =
-    let
-        failure =
-            CheckboxFailure (CheckUpdate (Just description) False id model.checklist.id CREATE)
-
-        failures =
-            addFailure failure model
-
-        newModel =
-            case err of
-                Http.BadStatus response ->
-                    case response.status.code of
-                        404 ->
-                            model
-                                |> updateError "Error adding checkboxes"
-
-                        401 ->
-                            model
-                                |> updateError "You do not have permission to edit that resource"
-
-                        _ ->
-                            model
-                                |> updateError (toString err)
-                                |> updateFailedPosts failures
+                401 ->
+                    model
+                        |> updateError "You do not have permission to edit that resource"
 
                 _ ->
                     model
                         |> updateError (toString err)
                         |> updateFailedPosts failures
-    in
-    newModel ! [ saveFailures failures ]
+
+        _ ->
+            model
+                |> updateError (toString err)
+                |> updateFailedPosts failures
 
 
 
@@ -275,16 +202,6 @@ toggleChecked id checkboxes =
                 cb
     in
     List.map toggle checkboxes
-
-
-getFlippedChecked : Int -> List Checkbox -> Bool
-getFlippedChecked id checkboxes =
-    case findById id checkboxes of
-        Just checkbox ->
-            not checkbox.checked
-
-        Nothing ->
-            False
 
 
 setEdit : Int -> Editing -> List Checkbox -> List Checkbox
@@ -340,29 +257,6 @@ saveEdit id checkboxes =
     List.map edit checkboxes
 
 
-sendEditToDatabase : Int -> Model -> Cmd Msg
-sendEditToDatabase id model =
-    case findById id model.checks of
-        Just checkbox ->
-            case checkbox.editing of
-                Editing description ->
-                    updateCheckboxDatabase
-                        model.auth.token
-                        { checkbox | description = description }
-                        id
-
-                _ ->
-                    Cmd.none
-
-        Nothing ->
-            Cmd.none
-
-
-deleteCheckbox : Int -> List Checkbox -> List Checkbox
-deleteCheckbox id checkboxes =
-    List.filter (\cb -> cb.id /= id) checkboxes
-
-
 createCheckbox : Model -> ( Int, Checkbox )
 createCheckbox model =
     let
@@ -383,23 +277,6 @@ createUniqueCheckboxId id checkboxes =
 
         Nothing ->
             id
-
-
-updateFromDatabase : Checkbox -> List Checkbox -> List Checkbox
-updateFromDatabase checkbox checkboxes =
-    let
-        update check =
-            if check.id == checkbox.id then
-                checkbox
-            else
-                check
-    in
-    List.map update checkboxes
-
-
-save : Int -> List Checkbox -> Cmd Msg
-save id checkboxes =
-    setCheckboxes (encodeCheckboxes id checkboxes)
 
 
 buildFailedCheckboxEdit : Checkbox -> Model -> List Failure

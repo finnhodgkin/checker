@@ -1,8 +1,9 @@
 port module Main exposing (..)
 
-import Checkbox exposing (focusElement)
 import CheckboxUpdate exposing (..)
+import CommandHelpers exposing (..)
 import Dom exposing (..)
+import Helpers exposing (..)
 import Html exposing (Html)
 import Json.Encode exposing (Value)
 import Offline exposing (decodeOnlineOffline)
@@ -53,33 +54,46 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
-            model ! []
+            cmdNone model
 
         ClearAnimation id ->
-            { model | checks = clearCheckboxAnimation id model.checks } ! []
+            model
+                |> updateChecks (clearCheckboxAnimation id model.checks)
+                |> cmdNone
 
         Focus elementId ->
-            model ! [ focusElement elementId ]
+            model
+                |> cmd
+                |> cmdFocus elementId
+                |> cmdSend
 
-        FocusCreate result ->
-            case result of
-                Err (Dom.NotFound id) ->
-                    { model | error = "No '" ++ id ++ "' element found" } ! []
+        FocusCreate (Ok ()) ->
+            cmdNone model
 
-                Ok () ->
-                    model ! []
+        FocusCreate (Err (Dom.NotFound id)) ->
+            model
+                |> updateError ("No '" ++ id ++ "' element found")
+                |> cmdNone
 
         BadListDecode error ->
-            { model | error = error } ! []
+            model
+                |> updateError error
+                |> cmdNone
 
         BadBoxDecode error ->
-            { model | error = error } ! []
+            model
+                |> updateError error
+                |> cmdNone
 
         BadFailureDecode error ->
-            { model | error = error } ! []
+            model
+                |> updateError error
+                |> cmdNone
 
         GetAllFailures failures ->
-            { model | failedPosts = failures } ! []
+            model
+                |> updateFailedPosts failures
+                |> cmdNone
 
         _ ->
             checkboxUpdate msg model

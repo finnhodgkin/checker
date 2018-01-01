@@ -1,5 +1,7 @@
 module Offline exposing (..)
 
+import CommandHelpers exposing (..)
+import Helpers exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Decode exposing (Value, decodeValue, string)
@@ -34,13 +36,18 @@ decodeOnlineOffline isOnline =
 offlineUpdate : Msg -> Model -> ( Model, Cmd Msg )
 offlineUpdate msg model =
     case msg of
-        OnlineOffline online ->
-            case online of
-                Online ->
-                    { model | failedPosts = [], online = Online } ! (sendFailures model ++ [ clearSavedFailures ])
+        OnlineOffline Online ->
+            model
+                |> updateFailedPosts []
+                |> updateOnline
+                |> cmd
+                |> cmdSendFailures
+                |> cmdSend
 
-                Offline ->
-                    { model | online = Offline } ! []
+        OnlineOffline Offline ->
+            model
+                |> updateOffline
+                |> cmdNone
 
         _ ->
             model ! [ Cmd.none ]
