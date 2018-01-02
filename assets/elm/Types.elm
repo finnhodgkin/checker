@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Dom exposing (..)
 import Http
+import NoteTypes exposing (Note, NoteMsg)
 import Time exposing (Time)
 
 
@@ -17,6 +18,8 @@ type alias Model =
     , checkboxLoaded : Load
     , failedPosts : List Failure
     , online : Online
+    , notes : List Note
+    , currentNote : Maybe Int
     }
 
 
@@ -130,4 +133,7 @@ type Msg
     | BadBoxDecode String
     | BadFailureDecode String
     | GetAllFailures (List Failure)
+    | Notes NoteMsg
+    | UpdateCurrentNote String
+    | SetCurrentNote Int
     | NoOp

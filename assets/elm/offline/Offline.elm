@@ -49,5 +49,8 @@ offlineUpdate msg model =
                 |> updateOffline
                 |> cmdNone
 
+        Notes noteMsg ->
+            notesUpdate noteMsg model
+
         _ ->
-            model ! [ Cmd.none ]
+            cmdNone model

@@ -9,7 +9,8 @@
     "auth",
     "checkbox",
     "checklist",
-    "offline"
+    "offline",
+    "notes"
   ],
   "exposed-modules": [],
   "dependencies": {

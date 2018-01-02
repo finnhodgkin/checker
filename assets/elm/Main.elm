@@ -40,7 +40,7 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     let
         model token =
-            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online
+            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online []
     in
     case authToken of
         Just token ->
