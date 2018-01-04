@@ -27,13 +27,13 @@ cmdSend modelCmd =
     model ! cmd
 
 
-cmdCreateChecklist : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
-cmdCreateChecklist modelCmd =
+cmdCreateChecklist : String -> ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
+cmdCreateChecklist title modelCmd =
     let
         ( model, cmd ) =
             modelCmd
     in
-    ( model, cmd ++ [ createChecklist model.auth.token model.createChecklist ] )
+    ( model, cmd ++ [ createChecklist model.auth.token title ] )
 
 
 cmdSetLists : ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )

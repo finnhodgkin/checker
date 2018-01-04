@@ -3,9 +3,11 @@ module Page exposing (content)
 import Authentication exposing (authenticateView)
 import Checkbox exposing (..)
 import Checklist exposing (checklists, getEditString)
+import Helpers exposing (isJust)
 import Html exposing (..)
 import Html.Attributes exposing (autocomplete, class, for, id, type_, value)
 import Html.Events exposing (..)
+import Notes exposing (notes)
 import Types exposing (..)
 
 
@@ -13,8 +15,13 @@ content : Model -> Html Msg
 content model =
     if model.auth.token == "" then
         authenticateView model
+    else if isJust model.currentNote then
+        div [ class "notes-container" ] [ notes model ]
     else if model.checklist.id == 0 then
-        checklists model
+        Html.main_ []
+            [ checklists model
+            , div [ class "mobile-container" ] [ notes model ]
+            ]
     else
         Html.main_ []
             [ checkListHeader model.checklist

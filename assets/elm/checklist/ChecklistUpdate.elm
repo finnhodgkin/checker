@@ -14,12 +14,16 @@ checklistUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checklistUpdate msg model =
     case msg of
         CreateChecklist ->
+            let
+                title =
+                    model.createChecklist
+            in
             model
                 |> updateCreateList ""
                 |> updateList (Checklist model.createChecklist 1 Set)
                 |> updateListStatus Unsaved
                 |> cmd
-                |> cmdCreateChecklist
+                |> cmdCreateChecklist title
                 |> cmdSend
 
         CreateChecklistDatabase (Ok checklist) ->

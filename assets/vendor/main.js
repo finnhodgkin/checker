@@ -13522,6 +13522,30 @@ var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$a
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
 
+var _user$project$NoteTypes$Note = F3(
+	function (a, b, c) {
+		return {note: a, title: b, id: c};
+	});
+var _user$project$NoteTypes$SetNoteEdit = {ctor: 'SetNoteEdit'};
+var _user$project$NoteTypes$UpdateCreateNote = function (a) {
+	return {ctor: 'UpdateCreateNote', _0: a};
+};
+var _user$project$NoteTypes$CreateNote = {ctor: 'CreateNote'};
+var _user$project$NoteTypes$ClearNote = {ctor: 'ClearNote'};
+var _user$project$NoteTypes$NewValues = F2(
+	function (a, b) {
+		return {ctor: 'NewValues', _0: a, _1: b};
+	});
+var _user$project$NoteTypes$SetNote = function (a) {
+	return {ctor: 'SetNote', _0: a};
+};
+var _user$project$NoteTypes$UpdateTitle = function (a) {
+	return {ctor: 'UpdateTitle', _0: a};
+};
+var _user$project$NoteTypes$UpdateNote = function (a) {
+	return {ctor: 'UpdateNote', _0: a};
+};
+
 var _user$project$Types$Model = function (a) {
 	return function (b) {
 		return function (c) {
@@ -13533,7 +13557,15 @@ var _user$project$Types$Model = function (a) {
 								return function (i) {
 									return function (j) {
 										return function (k) {
-											return {checks: a, error: b, create: c, checklist: d, auth: e, checklists: f, createChecklist: g, savedChecklist: h, checkboxLoaded: i, failedPosts: j, online: k};
+											return function (l) {
+												return function (m) {
+													return function (n) {
+														return function (o) {
+															return {checks: a, error: b, create: c, checklist: d, auth: e, checklists: f, createChecklist: g, savedChecklist: h, checkboxLoaded: i, failedPosts: j, online: k, notes: l, currentNote: m, noteRows: n, createNote: o};
+														};
+													};
+												};
+											};
 										};
 									};
 								};
@@ -13590,6 +13622,9 @@ var _user$project$Types$NoAnimation = {ctor: 'NoAnimation'};
 var _user$project$Types$Delete = {ctor: 'Delete'};
 var _user$project$Types$Create = {ctor: 'Create'};
 var _user$project$Types$NoOp = {ctor: 'NoOp'};
+var _user$project$Types$Notes = function (a) {
+	return {ctor: 'Notes', _0: a};
+};
 var _user$project$Types$GetAllFailures = function (a) {
 	return {ctor: 'GetAllFailures', _0: a};
 };
@@ -13895,6 +13930,14 @@ var _user$project$Helpers$updateChecks = F2(
 			model,
 			{checks: checkboxes});
 	});
+var _user$project$Helpers$isJust = function (mayb) {
+	var _p0 = mayb;
+	if (_p0.ctor === 'Just') {
+		return true;
+	} else {
+		return false;
+	}
+};
 var _user$project$Helpers$updateById = F2(
 	function (newItem, list) {
 		var update = function (item) {
@@ -13920,6 +13963,22 @@ var _user$project$Helpers$findById = F2(
 					return _elm_lang$core$Native_Utils.eq(item.id, id);
 				},
 				list));
+	});
+var _user$project$Helpers$createUniqueId = F2(
+	function (id, list) {
+		createUniqueId:
+		while (true) {
+			var _p1 = A2(_user$project$Helpers$findById, id, list);
+			if (_p1.ctor === 'Just') {
+				var _v2 = id - 1,
+					_v3 = list;
+				id = _v2;
+				list = _v3;
+				continue createUniqueId;
+			} else {
+				return id;
+			}
+		}
 	});
 var _user$project$Helpers$decodeStringToUnion = function (typeCaseFunction) {
 	return A2(
@@ -15477,23 +15536,24 @@ var _user$project$CommandHelpers$cmdSetLists = function (modelCmd) {
 			})
 	};
 };
-var _user$project$CommandHelpers$cmdCreateChecklist = function (modelCmd) {
-	var _p15 = modelCmd;
-	var model = _p15._0;
-	var cmd = _p15._1;
-	return {
-		ctor: '_Tuple2',
-		_0: model,
-		_1: A2(
-			_elm_lang$core$Basics_ops['++'],
-			cmd,
-			{
-				ctor: '::',
-				_0: A2(_user$project$Requests$createChecklist, model.auth.token, model.createChecklist),
-				_1: {ctor: '[]'}
-			})
-	};
-};
+var _user$project$CommandHelpers$cmdCreateChecklist = F2(
+	function (title, modelCmd) {
+		var _p15 = modelCmd;
+		var model = _p15._0;
+		var cmd = _p15._1;
+		return {
+			ctor: '_Tuple2',
+			_0: model,
+			_1: A2(
+				_elm_lang$core$Basics_ops['++'],
+				cmd,
+				{
+					ctor: '::',
+					_0: A2(_user$project$Requests$createChecklist, model.auth.token, title),
+					_1: {ctor: '[]'}
+				})
+		};
+	});
 var _user$project$CommandHelpers$cmdSend = function (modelCmd) {
 	var _p16 = modelCmd;
 	var model = _p16._0;
@@ -15514,32 +15574,163 @@ var _user$project$CommandHelpers$cmdNone = function (model) {
 		{ctor: '[]'});
 };
 
+var _user$project$NoteHelpers$getRows = function (scrollHeight) {
+	return _elm_lang$core$Basics$ceiling(
+		(_elm_lang$core$Basics$toFloat(scrollHeight) * 1.5) / 25);
+};
+var _user$project$NoteHelpers$updateRows = F2(
+	function (rows, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				noteRows: _user$project$NoteHelpers$getRows(rows)
+			});
+	});
+var _user$project$NoteHelpers$updateNote = F2(
+	function (text, model) {
+		var currentId = A2(_elm_lang$core$Maybe$withDefault, -1, model.currentNote);
+		var updateNote = function (note) {
+			return _elm_lang$core$Native_Utils.eq(currentId, note.id) ? _elm_lang$core$Native_Utils.update(
+				note,
+				{note: text}) : note;
+		};
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				notes: A2(_elm_lang$core$List$map, updateNote, model.notes)
+			});
+	});
+var _user$project$NoteHelpers$updateTitle = F2(
+	function (text, model) {
+		var currentId = A2(_elm_lang$core$Maybe$withDefault, -1, model.currentNote);
+		var updateNote = function (note) {
+			return _elm_lang$core$Native_Utils.eq(currentId, note.id) ? _elm_lang$core$Native_Utils.update(
+				note,
+				{title: text}) : note;
+		};
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				notes: A2(_elm_lang$core$List$map, updateNote, model.notes)
+			});
+	});
+var _user$project$NoteHelpers$updateClearNote = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{currentNote: _elm_lang$core$Maybe$Nothing});
+};
+var _user$project$NoteHelpers$updateCreateNoteString = F2(
+	function (string, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				createNote: _user$project$Types$Editing(string)
+			});
+	});
+var _user$project$NoteHelpers$updateSetNoteEdit = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			createNote: _user$project$Types$Editing('')
+		});
+};
+var _user$project$NoteHelpers$updateCreateNote = function (model) {
+	var id = A2(_user$project$Helpers$createUniqueId, -1, model.notes);
+	var _p0 = model.createNote;
+	if (_p0.ctor === 'Editing') {
+		if (_p0._0 === '') {
+			return _elm_lang$core$Native_Utils.update(
+				model,
+				{createNote: _user$project$Types$Set});
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					currentNote: _elm_lang$core$Maybe$Just(id),
+					notes: A2(
+						_elm_lang$core$Basics_ops['++'],
+						model.notes,
+						{
+							ctor: '::',
+							_0: A3(_user$project$NoteTypes$Note, '', _p0._0, id),
+							_1: {ctor: '[]'}
+						}),
+					createNote: _user$project$Types$Set
+				});
+		}
+	} else {
+		return model;
+	}
+};
+var _user$project$NoteHelpers$updateCurrentNote = F2(
+	function (id, model) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{
+				currentNote: _elm_lang$core$Maybe$Just(id)
+			});
+	});
+
+var _user$project$NotesUpdate$notesUpdate = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'UpdateNote':
+				return _user$project$CommandHelpers$cmdNone(
+					A2(_user$project$NoteHelpers$updateNote, _p0._0, model));
+			case 'SetNote':
+				return _user$project$CommandHelpers$cmdNone(
+					A2(_user$project$NoteHelpers$updateCurrentNote, _p0._0, model));
+			case 'UpdateTitle':
+				return _user$project$CommandHelpers$cmdNone(
+					A2(_user$project$NoteHelpers$updateTitle, _p0._0, model));
+			case 'NewValues':
+				return _user$project$CommandHelpers$cmdNone(
+					A2(
+						_user$project$NoteHelpers$updateRows,
+						_p0._1,
+						A2(_user$project$NoteHelpers$updateNote, _p0._0, model)));
+			case 'CreateNote':
+				return _user$project$CommandHelpers$cmdNone(
+					_user$project$NoteHelpers$updateCreateNote(model));
+			case 'UpdateCreateNote':
+				return _user$project$CommandHelpers$cmdNone(
+					A2(_user$project$NoteHelpers$updateCreateNoteString, _p0._0, model));
+			case 'SetNoteEdit':
+				return _user$project$CommandHelpers$cmdSend(
+					A2(
+						_user$project$CommandHelpers$cmdFocus,
+						'note-edit',
+						_user$project$CommandHelpers$cmd(
+							_user$project$NoteHelpers$updateSetNoteEdit(model))));
+			default:
+				return _user$project$CommandHelpers$cmdNone(
+					_user$project$NoteHelpers$updateClearNote(model));
+		}
+	});
+
 var _user$project$Offline$offlineUpdate = F2(
 	function (msg, model) {
 		var _p0 = msg;
-		if (_p0.ctor === 'OnlineOffline') {
-			if (_p0._0.ctor === 'Online') {
-				return _user$project$CommandHelpers$cmdSend(
-					_user$project$CommandHelpers$cmdSendFailures(
-						_user$project$CommandHelpers$cmd(
-							_user$project$Helpers$updateOnline(
-								A2(
-									_user$project$Helpers$updateFailedPosts,
-									{ctor: '[]'},
-									model)))));
-			} else {
-				return _user$project$CommandHelpers$cmdNone(
-					_user$project$Helpers$updateOffline(model));
-			}
-		} else {
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				model,
-				{
-					ctor: '::',
-					_0: _elm_lang$core$Platform_Cmd$none,
-					_1: {ctor: '[]'}
-				});
+		switch (_p0.ctor) {
+			case 'OnlineOffline':
+				if (_p0._0.ctor === 'Online') {
+					return _user$project$CommandHelpers$cmdSend(
+						_user$project$CommandHelpers$cmdSendFailures(
+							_user$project$CommandHelpers$cmd(
+								_user$project$Helpers$updateOnline(
+									A2(
+										_user$project$Helpers$updateFailedPosts,
+										{ctor: '[]'},
+										model)))));
+				} else {
+					return _user$project$CommandHelpers$cmdNone(
+						_user$project$Helpers$updateOffline(model));
+				}
+			case 'Notes':
+				return A2(_user$project$NotesUpdate$notesUpdate, _p0._0, model);
+			default:
+				return _user$project$CommandHelpers$cmdNone(model);
 		}
 	});
 var _user$project$Offline$decodeOnlineOffline = function (isOnline) {
@@ -15834,8 +16025,11 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 		var _p0 = msg;
 		switch (_p0.ctor) {
 			case 'CreateChecklist':
+				var title = model.createChecklist;
 				return _user$project$CommandHelpers$cmdSend(
-					_user$project$CommandHelpers$cmdCreateChecklist(
+					A2(
+						_user$project$CommandHelpers$cmdCreateChecklist,
+						title,
 						_user$project$CommandHelpers$cmd(
 							A2(
 								_user$project$Helpers$updateListStatus,
@@ -16506,6 +16700,279 @@ var _user$project$CheckboxUpdate$checkboxUpdate = F2(
 		}
 	});
 
+var _user$project$Notes$notesTitle = function (model) {
+	var title = function () {
+		var _p0 = model.createNote;
+		if (_p0.ctor === 'Editing') {
+			return {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$form,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('notes-list__form'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onSubmit(
+								_user$project$Types$Notes(_user$project$NoteTypes$CreateNote)),
+							_1: {ctor: '[]'}
+						}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$input,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('notes-list__input'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Events$onInput(
+										function (_p1) {
+											return _user$project$Types$Notes(
+												_user$project$NoteTypes$UpdateCreateNote(_p1));
+										}),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$value(_p0._0),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$id('note-edit'),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$button,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('material-icons notes-title__submit'),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('add'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {ctor: '[]'}
+			};
+		} else {
+			return {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$h2,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('notes-title'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('Notes'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$i,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('material-icons notes-title__add'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onClick(
+									_user$project$Types$Notes(_user$project$NoteTypes$SetNoteEdit)),
+								_1: {ctor: '[]'}
+							}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('note_add'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			};
+		}
+	}();
+	return A2(
+		_elm_lang$html$Html$section,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('notes-title-wrap'),
+			_1: {ctor: '[]'}
+		},
+		title);
+};
+var _user$project$Notes$showNoteList = function (model) {
+	return A2(
+		_elm_lang$html$Html$section,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('notes-list-wrap'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _user$project$Notes$notesTitle(model),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$ul,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('notes-list'),
+						_1: {ctor: '[]'}
+					},
+					A2(
+						_elm_lang$core$List$map,
+						function (note) {
+							return A2(
+								_elm_lang$html$Html$li,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('notes-list__item'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onClick(
+											_user$project$Types$Notes(
+												_user$project$NoteTypes$SetNote(note.id))),
+										_1: {ctor: '[]'}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text(note.title),
+									_1: {ctor: '[]'}
+								});
+						},
+						model.notes)),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Notes$noteInputDecoder = A2(
+	_elm_lang$core$Json_Decode$map,
+	_user$project$Types$Notes,
+	A3(
+		_elm_lang$core$Json_Decode$map2,
+		_user$project$NoteTypes$NewValues,
+		A2(
+			_elm_lang$core$Json_Decode$at,
+			{
+				ctor: '::',
+				_0: 'target',
+				_1: {
+					ctor: '::',
+					_0: 'value',
+					_1: {ctor: '[]'}
+				}
+			},
+			_elm_lang$core$Json_Decode$string),
+		A2(
+			_elm_lang$core$Json_Decode$at,
+			{
+				ctor: '::',
+				_0: 'target',
+				_1: {
+					ctor: '::',
+					_0: 'scrollHeight',
+					_1: {ctor: '[]'}
+				}
+			},
+			_elm_lang$core$Json_Decode$int)));
+var _user$project$Notes$note = F2(
+	function (id, model) {
+		var _p2 = A2(
+			_elm_lang$core$Maybe$withDefault,
+			{ctor: '_Tuple2', _0: '', _1: ''},
+			A2(
+				_elm_lang$core$Maybe$map,
+				function (note) {
+					return {ctor: '_Tuple2', _0: note.note, _1: note.title};
+				},
+				A2(_user$project$Helpers$findById, id, model.notes)));
+		var noteText = _p2._0;
+		var noteTitle = _p2._1;
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('notes'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('notes__title'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$i,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onClick(
+									_user$project$Types$Notes(_user$project$NoteTypes$ClearNote)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('material-icons'),
+									_1: {ctor: '[]'}
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('chevron_left'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(noteTitle),
+							_1: {ctor: '[]'}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$textarea,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('notes__text'),
+							_1: {
+								ctor: '::',
+								_0: A2(_elm_lang$html$Html_Events$on, 'input', _user$project$Notes$noteInputDecoder),
+								_1: {ctor: '[]'}
+							}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(noteText),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$Notes$notes = function (model) {
+	var _p3 = model.currentNote;
+	if (_p3.ctor === 'Just') {
+		return A2(_user$project$Notes$note, _p3._0, model);
+	} else {
+		return _user$project$Notes$showNoteList(model);
+	}
+};
+
 var _user$project$Page$submitButton = function (submit) {
 	return A2(
 		_elm_lang$html$Html$i,
@@ -16756,7 +17223,40 @@ var _user$project$Page$checkListHeader = function (checklist) {
 		});
 };
 var _user$project$Page$content = function (model) {
-	return _elm_lang$core$Native_Utils.eq(model.auth.token, '') ? _user$project$Authentication$authenticateView(model) : (_elm_lang$core$Native_Utils.eq(model.checklist.id, 0) ? _user$project$Checklist$checklists(model) : A2(
+	return _elm_lang$core$Native_Utils.eq(model.auth.token, '') ? _user$project$Authentication$authenticateView(model) : (_user$project$Helpers$isJust(model.currentNote) ? A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('notes-container'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _user$project$Notes$notes(model),
+			_1: {ctor: '[]'}
+		}) : (_elm_lang$core$Native_Utils.eq(model.checklist.id, 0) ? A2(
+		_elm_lang$html$Html$main_,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _user$project$Checklist$checklists(model),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('mobile-container'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _user$project$Notes$notes(model),
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			}
+		}) : A2(
 		_elm_lang$html$Html$main_,
 		{ctor: '[]'},
 		{
@@ -16793,7 +17293,7 @@ var _user$project$Page$content = function (model) {
 					_1: {ctor: '[]'}
 				}
 			}
-		}));
+		})));
 };
 
 var _user$project$Main$view = function (model) {
@@ -16870,7 +17370,12 @@ var _user$project$Main$init = function (authToken) {
 			A3(_user$project$Types$Checklist, '', 0, _user$project$Types$Set))(
 			_user$project$Types$Auth(token))(
 			{ctor: '[]'})('')(_user$project$Types$Unloaded)(_user$project$Types$Empty)(
-			{ctor: '[]'})(_user$project$Types$Online);
+			{ctor: '[]'})(_user$project$Types$Online)(
+			{
+				ctor: '::',
+				_0: A3(_user$project$NoteTypes$Note, 'test', 'test title', 1),
+				_1: {ctor: '[]'}
+			})(_elm_lang$core$Maybe$Nothing)(0)(_user$project$Types$Set);
 	};
 	var _p1 = authToken;
 	if (_p1.ctor === 'Just') {
@@ -16927,7 +17432,7 @@ var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Types.Request":{"args":[],"tags":{"EDIT":[],"CREATE":[],"DELETE":[],"SAVE":[]}},"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Types.Failure":{"args":[],"tags":{"ChecklistFailure":["Types.ChecklistUpdate"],"CheckboxFailure":["Types.CheckUpdate"]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"BadFailureDecode":["String"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"BadBoxDecode":["String"],"OnlineOffline":["Types.Online"],"BadListDecode":["String"],"UpdateCreateChecklist":["String"],"GetAllFailures":["List Types.Failure"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Types.CheckUpdate":{"args":[],"type":"{ description : Maybe.Maybe String , checked : Bool , id : Int , listId : Int , command : Types.Request }"},"Types.ChecklistUpdate":{"args":[],"type":"{ title : Maybe.Maybe String, id : Int, command : Types.Request }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$Main$main(Elm['Main'], 'Main', {"types":{"unions":{"Types.Request":{"args":[],"tags":{"EDIT":[],"CREATE":[],"DELETE":[],"SAVE":[]}},"Dict.LeafColor":{"args":[],"tags":{"LBBlack":[],"LBlack":[]}},"Types.Online":{"args":[],"tags":{"Online":[],"Offline":[]}},"Types.Failure":{"args":[],"tags":{"ChecklistFailure":["Types.ChecklistUpdate"],"CheckboxFailure":["Types.CheckUpdate"]}},"Dom.Error":{"args":[],"tags":{"NotFound":["String"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":["Dict.LeafColor"]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Types.Status":{"args":[],"tags":{"Unsaved":[],"Unloaded":[],"Saved":[]}},"Types.Msg":{"args":[],"tags":{"Focus":["String"],"DeleteCheckboxDatabase":["Int","Result.Result Http.Error String"],"UpdateCheckboxDatabase":["Types.Checkbox","Result.Result Http.Error Types.Checkbox"],"CreateCheckbox":[],"Logout":[],"CreateCheckboxDatabase":["Int","String","Result.Result Http.Error Types.Checkbox"],"DeleteCheckbox":["Int","String"],"CreateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"CreateChecklist":[],"SetList":["Types.Checklist"],"BadFailureDecode":["String"],"Check":["Int"],"SetChecklist":[],"UpdateCreateCheckbox":["String"],"BadBoxDecode":["String"],"OnlineOffline":["Types.Online"],"BadListDecode":["String"],"UpdateCreateChecklist":["String"],"GetAllFailures":["List Types.Failure"],"SendFailures":["Time.Time"],"ClearAnimation":["Int"],"GetAllCheckboxes":["Result.Result Http.Error (List Types.Checkbox)"],"ShowLists":["Result.Result Http.Error (List Types.Checklist)"],"DeleteChecklist":[],"UpdateChecklist":["String"],"SetEditCheckbox":["Int","String","Bool"],"FocusCreate":["Result.Result Dom.Error ()"],"DeleteChecklistDatabase":["Int","Result.Result Http.Error String"],"UpdateChecklistDatabase":["Result.Result Http.Error Types.Checklist"],"EditChecklist":[],"Notes":["NoteTypes.NoteMsg"],"SaveEditCheckbox":["Int"],"UpdateEditCheckbox":["Int","String"],"NoOp":[],"CancelEditCheckbox":["Int","String"],"ResetChecklist":[]}},"NoteTypes.NoteMsg":{"args":[],"tags":{"SetNote":["Int"],"UpdateCreateNote":["String"],"ClearNote":[],"CreateNote":[],"NewValues":["String","Int"],"SetNoteEdit":[],"UpdateTitle":["String"],"UpdateNote":["String"]}},"Dict.NColor":{"args":[],"tags":{"BBlack":[],"Red":[],"NBlack":[],"Black":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String"],"NetworkError":[],"Timeout":[],"BadStatus":["Http.Response String"],"BadPayload":["String","Http.Response String"]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Types.Animate":{"args":[],"tags":{"Create":[],"NoAnimation":[],"Delete":[]}},"Types.Editing":{"args":[],"tags":{"Editing":["String"],"Set":[]}}},"aliases":{"Http.Response":{"args":["body"],"type":"{ url : String , status : { code : Int, message : String } , headers : Dict.Dict String String , body : body }"},"Types.Checkbox":{"args":[],"type":"{ description : String , checked : Bool , id : Int , saved : Types.Status , editing : Types.Editing , animate : Types.Animate }"},"Types.Checklist":{"args":[],"type":"{ title : String, id : Int, editing : Types.Editing }"},"Types.CheckUpdate":{"args":[],"type":"{ description : Maybe.Maybe String , checked : Bool , id : Int , listId : Int , command : Types.Request }"},"Types.ChecklistUpdate":{"args":[],"type":"{ title : Maybe.Maybe String, id : Int, command : Types.Request }"},"Time.Time":{"args":[],"type":"Float"}},"message":"Types.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])

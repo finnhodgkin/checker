@@ -35,6 +35,26 @@ updateById newItem list =
     List.map update list
 
 
+createUniqueId : Int -> List { a | id : Int } -> Int
+createUniqueId id list =
+    case findById id list of
+        Just _ ->
+            createUniqueId (id - 1) list
+
+        Nothing ->
+            id
+
+
+isJust : Maybe a -> Bool
+isJust mayb =
+    case mayb of
+        Just _ ->
+            True
+
+        Nothing ->
+            False
+
+
 
 -- Checkboxes
 

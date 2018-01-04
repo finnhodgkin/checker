@@ -2,8 +2,14 @@ module NoteTypes exposing (..)
 
 
 type NoteMsg
-    = UpdateCurrentNote String
-    | SetCurrentNote Int
+    = UpdateNote String
+    | UpdateTitle String
+    | SetNote Int
+    | NewValues String Int
+    | ClearNote
+    | CreateNote
+    | UpdateCreateNote String
+    | SetNoteEdit
 
 
 type alias Note =

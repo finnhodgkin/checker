@@ -20,6 +20,8 @@ type alias Model =
     , online : Online
     , notes : List Note
     , currentNote : Maybe Int
+    , noteRows : Int
+    , createNote : Editing
     }
 
 
@@ -134,6 +136,4 @@ type Msg
     | BadFailureDecode String
     | GetAllFailures (List Failure)
     | Notes NoteMsg
-    | UpdateCurrentNote String
-    | SetCurrentNote Int
     | NoOp

@@ -6,6 +6,7 @@ import Dom exposing (..)
 import Helpers exposing (..)
 import Html exposing (Html)
 import Json.Encode exposing (Value)
+import NoteTypes exposing (..)
 import Offline exposing (decodeOnlineOffline)
 import Page exposing (content)
 import Requests exposing (..)
@@ -40,7 +41,22 @@ init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     let
         model token =
-            Model [] "" "" (Checklist "" 0 Set) (Auth token) [] "" Unloaded Empty [] Online []
+            Model []
+                ""
+                ""
+                (Checklist "" 0 Set)
+                (Auth token)
+                []
+                ""
+                Unloaded
+                Empty
+                []
+                Online
+                [ Note "test" "test title" 1
+                ]
+                Nothing
+                0
+                Set
     in
     case authToken of
         Just token ->

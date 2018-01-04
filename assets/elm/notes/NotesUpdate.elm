@@ -1,17 +1,53 @@
 module NotesUpdate exposing (..)
 
+import CommandHelpers exposing (cmd, cmdFocus, cmdNone, cmdSend)
+import NoteHelpers exposing (..)
 import NoteTypes exposing (..)
 import Types exposing (..)
 
 
-notesUpdate : Msg -> Model -> ( Model, Cmd Msg )
+notesUpdate : NoteMsg -> Model -> ( Model, Cmd Msg )
 notesUpdate msg model =
     case msg of
-        UpdateCurrentNote text ->
-            model ! []
+        UpdateNote text ->
+            model
+                |> updateNote text
+                |> cmdNone
 
-        SetCurrerntNote id ->
-            model ! []
+        SetNote id ->
+            model
+                |> updateCurrentNote id
+                |> cmdNone
 
-        _ ->
-            model ! []
+        UpdateTitle text ->
+            model
+                |> updateTitle text
+                |> cmdNone
+
+        NewValues text num ->
+            model
+                |> updateNote text
+                |> updateRows num
+                |> cmdNone
+
+        CreateNote ->
+            model
+                |> updateCreateNote
+                |> cmdNone
+
+        UpdateCreateNote title ->
+            model
+                |> updateCreateNoteString title
+                |> cmdNone
+
+        SetNoteEdit ->
+            model
+                |> updateSetNoteEdit
+                |> cmd
+                |> cmdFocus "note-edit"
+                |> cmdSend
+
+        ClearNote ->
+            model
+                |> updateClearNote
+                |> cmdNone
