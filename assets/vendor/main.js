@@ -13945,6 +13945,12 @@ var _user$project$Helpers$updateById = F2(
 		};
 		return A2(_elm_lang$core$List$map, update, list);
 	});
+var _user$project$Helpers$updateListToLists = function (model) {
+	var lists = A2(_user$project$Helpers$updateById, model.checklist, model.checklists);
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{checklists: lists});
+};
 var _user$project$Helpers$deleteById = F2(
 	function (id, list) {
 		return A2(
@@ -16078,7 +16084,8 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 							A2(
 								_user$project$Helpers$updateCheckboxLoaded,
 								_user$project$Types$Loading,
-								A2(_user$project$Helpers$updateList, _p0._0, model)))));
+								_user$project$Helpers$updateListToLists(
+									A2(_user$project$Helpers$updateList, _p0._0, model))))));
 			case 'EditChecklist':
 				return _user$project$CommandHelpers$cmdSend(
 					A2(
@@ -16090,11 +16097,13 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 								_user$project$Helpers$startListEdit(model.checklist),
 								model))));
 			case 'UpdateChecklist':
-				return _user$project$CommandHelpers$cmdNone(
-					A2(
-						_user$project$Helpers$updateList,
-						A2(_user$project$Helpers$updateListEditing, _p0._0, model.checklist),
-						model));
+				return _user$project$CommandHelpers$cmdSend(
+					_user$project$CommandHelpers$cmdSetLists(
+						_user$project$CommandHelpers$cmd(
+							A2(
+								_user$project$Helpers$updateList,
+								A2(_user$project$Helpers$updateListEditing, _p0._0, model.checklist),
+								model))));
 			case 'DeleteChecklist':
 				return _user$project$CommandHelpers$cmdSend(
 					_user$project$CommandHelpers$cmdDeleteList(
@@ -16154,7 +16163,8 @@ var _user$project$ChecklistUpdate$checklistUpdate = F2(
 				var update = _p3._1;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
-					A2(_user$project$Helpers$updateList, list, model),
+					_user$project$Helpers$updateListToLists(
+						A2(_user$project$Helpers$updateList, list, model)),
 					{
 						ctor: '::',
 						_0: update,

@@ -49,6 +49,7 @@ checklistUpdate msg model =
         SetList checklist ->
             model
                 |> updateList checklist
+                |> updateListToLists
                 |> updateCheckboxLoaded Loading
                 |> cmd
                 |> cmdFetchFromBoth
@@ -64,7 +65,9 @@ checklistUpdate msg model =
         UpdateChecklist newTitle ->
             model
                 |> updateList (updateListEditing newTitle model.checklist)
-                |> cmdNone
+                |> cmd
+                |> cmdSetLists
+                |> cmdSend
 
         DeleteChecklist ->
             model
@@ -110,7 +113,11 @@ checklistUpdate msg model =
                 ( list, update ) =
                     setIfEditing model.checklist
             in
-            (model |> updateList list) ! [ update ]
+            (model
+                |> updateList list
+                |> updateListToLists
+            )
+                ! [ update ]
 
         UpdateChecklistDatabase (Ok checklist) ->
             model

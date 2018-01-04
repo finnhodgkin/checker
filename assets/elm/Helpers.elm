@@ -125,6 +125,15 @@ updateList checklist model =
     { model | checklist = checklist }
 
 
+updateListToLists : Model -> Model
+updateListToLists model =
+    let
+        lists =
+            updateById model.checklist model.checklists
+    in
+    { model | checklists = lists }
+
+
 updateCreateList : String -> Model -> Model
 updateCreateList title model =
     { model | createChecklist = title }
