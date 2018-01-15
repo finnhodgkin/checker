@@ -1,7 +1,7 @@
 module CommandHelpers exposing (..)
 
 import Checkbox exposing (focusElement)
-import Helpers exposing (findById)
+import Helpers exposing (currentChecklistId, findById)
 import PeriodicSend exposing (sendFailures)
 import Requests exposing (..)
 import SaveToStorage exposing (clearSavedFailures, encodeListChecklist, fetchCheckboxesFromLS, save, saveFailures, setLists)
@@ -50,9 +50,12 @@ cmdFetchFromBoth modelCmd =
     let
         ( model, cmd ) =
             modelCmd
+
+        listId =
+            currentChecklistId model
     in
     ( model
-    , cmd ++ [ fetchCheckboxesFromLS model.checklist.id, fetchInitialData model.auth.token model.checklist.id ]
+    , cmd ++ [ fetchCheckboxesFromLS listId, fetchInitialData model.auth.token listId ]
     )
 
 
@@ -84,7 +87,7 @@ cmdSaveChecks modelCmd =
         ( model, cmd ) =
             modelCmd
     in
-    ( model, cmd ++ [ save model.checklist.id model.checks ] )
+    ( model, cmd ++ [ save (currentChecklistId model) model.checks ] )
 
 
 cmdCheckToggle : Int -> ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )
@@ -111,7 +114,7 @@ cmdCreateCheckboxDatabase id description modelCmd =
         ( model, cmd ) =
             modelCmd
     in
-    ( model, cmd ++ [ createCheckboxRequest model.auth.token id description False model.checklist.id ] )
+    ( model, cmd ++ [ createCheckboxRequest model.auth.token id description False (currentChecklistId model) ] )
 
 
 cmdDeleteCheckboxRequest : Int -> ( Model, List (Cmd Msg) ) -> ( Model, List (Cmd Msg) )

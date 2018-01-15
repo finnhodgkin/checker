@@ -16,7 +16,7 @@ notesUpdate msg model =
 
         SetNote id ->
             model
-                |> updateCurrentNote id
+                |> updateNoteView id
                 |> cmdNone
 
         UpdateTitle text ->
@@ -46,8 +46,3 @@ notesUpdate msg model =
                 |> cmd
                 |> cmdFocus "note-edit"
                 |> cmdSend
-
-        ClearNote ->
-            model
-                |> updateClearNote
-                |> cmdNone

@@ -25,6 +25,15 @@ import Types exposing (..)
 
 checkboxUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checkboxUpdate msg model =
+    let
+        checklist =
+            case model.view of
+                CheckboxView checklist ->
+                    checklist
+
+                _ ->
+                    Checklist "" 0 Set
+    in
     case msg of
         Check id ->
             model
@@ -126,7 +135,7 @@ checkboxUpdate msg model =
 
         DeleteCheckboxDatabase id (Err _) ->
             model
-                |> updateFailedPosts (addFailure (failedDelete id model.checklist.id) model)
+                |> updateFailedPosts (addFailure (failedDelete id checklist.id) model)
                 |> updateError "Unable to delete"
                 |> cmd
                 |> cmdSaveFailedPosts
@@ -164,7 +173,7 @@ handleResponseError : Http.Error -> Int -> String -> Model -> Model
 handleResponseError err id description model =
     let
         failures =
-            addFailure (failedCreate id model.checklist.id description) model
+            addFailure (failedCreate id (currentChecklistId model) description) model
     in
     case err of
         Http.BadStatus response ->
@@ -306,7 +315,7 @@ buildFailedCheckboxEdit checkbox model =
                     checkboxDescription
                     checkbox.checked
                     checkbox.id
-                    model.checklist.id
+                    (currentChecklistId model)
                     EDIT
     in
     addFailure failure model

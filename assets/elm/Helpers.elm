@@ -1,5 +1,7 @@
 module Helpers exposing (..)
 
+import Html exposing (Attribute)
+import Html.Events exposing (on)
 import Json.Decode as JD exposing (..)
 import Types exposing (..)
 
@@ -53,6 +55,72 @@ isJust mayb =
 
         Nothing ->
             False
+
+
+currentChecklistMaybe : Model -> Maybe Checklist
+currentChecklistMaybe model =
+    case model.view of
+        CheckboxView checklist ->
+            Just checklist
+
+        _ ->
+            Nothing
+
+
+currentChecklist : Model -> Checklist
+currentChecklist model =
+    Maybe.withDefault (Checklist "" 0 Set) (currentChecklistMaybe model)
+
+
+currentChecklistId : Model -> Int
+currentChecklistId model =
+    Maybe.withDefault 0 <| Maybe.map (\check -> check.id) (currentChecklistMaybe model)
+
+
+animEnd : String -> Msg -> List (Attribute Msg)
+animEnd name msg =
+    let
+        decoder =
+            field "animationName" string
+                |> JD.andThen
+                    (\str ->
+                        if str == name then
+                            succeed msg
+                        else
+                            fail ""
+                    )
+    in
+    List.map (\ae -> on ae decoder)
+        [ "webkitAnimationEnd", "oanimationend", "msAnimationEnd", "animationend" ]
+
+
+
+-- Views
+
+
+updateCheckboxView : Checklist -> Model -> Model
+updateCheckboxView checklist model =
+    { model | view = CheckboxView checklist }
+
+
+updateChecklistView : Model -> Model
+updateChecklistView model =
+    { model | view = ChecklistView }
+
+
+updateNoteView : Int -> Model -> Model
+updateNoteView id model =
+    { model | view = NoteView id }
+
+
+updateNotesView : Model -> Model
+updateNotesView model =
+    { model | view = NotesView }
+
+
+updateAuthView : Model -> Model
+updateAuthView model =
+    { model | view = AuthView }
 
 
 
@@ -122,14 +190,17 @@ updateError error model =
 
 updateList : Checklist -> Model -> Model
 updateList checklist model =
-    { model | checklist = checklist }
+    { model | view = CheckboxView checklist }
 
 
 updateListToLists : Model -> Model
 updateListToLists model =
     let
+        list =
+            Maybe.withDefault (Checklist "" 0 Set) (currentChecklistMaybe model)
+
         lists =
-            updateById model.checklist model.checklists
+            updateById list model.checklists
     in
     { model | checklists = lists }
 
@@ -157,6 +228,21 @@ startListEdit list =
 updateListEditing : String -> Checklist -> Checklist
 updateListEditing editString list =
     { list | editing = Editing editString }
+
+
+updateChecklistAnimCreate : Model -> Model
+updateChecklistAnimCreate model =
+    { model | checklistAnimation = Create }
+
+
+updateChecklistAnimDelete : Model -> Model
+updateChecklistAnimDelete model =
+    { model | checklistAnimation = Delete }
+
+
+updateChecklistAnimNone : Model -> Model
+updateChecklistAnimNone model =
+    { model | checklistAnimation = NoAnimation }
 
 
 

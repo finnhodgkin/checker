@@ -200,12 +200,12 @@ deleteChecklist : Model -> Cmd Msg
 deleteChecklist model =
     let
         listId =
-            toString model.checklist.id
+            currentChecklistId model
 
         request =
-            reqDelete ("/checklists/" ++ listId) model.auth.token
+            reqDelete ("/checklists/" ++ toString listId) model.auth.token
     in
-    Http.send (DeleteChecklistDatabase model.checklist.id) request
+    Http.send (DeleteChecklistDatabase listId) request
 
 
 

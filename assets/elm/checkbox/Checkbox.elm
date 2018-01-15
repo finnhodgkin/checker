@@ -1,4 +1,4 @@
-module Checkbox exposing (checkboxes, focusElement)
+module Checkbox exposing (checkboxView, focusElement)
 
 import Dom exposing (..)
 import Html exposing (..)
@@ -9,8 +9,8 @@ import Task exposing (..)
 import Types exposing (..)
 
 
-checkboxes : Model -> Html Msg
-checkboxes model =
+checkboxView : Checklist -> Model -> Html Msg
+checkboxView checklist model =
     let
         checkboxes =
             if List.length model.checks == 0 then
@@ -18,9 +18,17 @@ checkboxes model =
             else
                 div [] (List.map checkbox (List.sortBy .description model.checks))
     in
-    div [ class "checkboxes" ]
-        [ checkboxes
-        , checkboxError model.error
+    Html.main_ []
+        [ checkListHeader checklist
+        , div [ class "overflow-none" ]
+            [ section [ class "mobile-container animate-right" ]
+                [ div [ class "checkboxes" ]
+                    [ checkboxes
+                    , checkboxError model.error
+                    ]
+                ]
+            ]
+        , createCheckbox model.create
         ]
 
 
@@ -147,3 +155,107 @@ checkboxError message =
 focusElement : String -> Cmd Msg
 focusElement elementId =
     Dom.focus elementId |> Task.attempt FocusCreate
+
+
+
+-- Header
+
+
+checkListHeader : Checklist -> Html Msg
+checkListHeader checklist =
+    header [ class "checklist-header" ]
+        [ section [ class "checklist-header__wrap" ]
+            [ backButton
+            , checklistTitle checklist
+            , checklistEditButton checklist
+            , checklistDeleteButton
+            ]
+        ]
+
+
+backButton : Html Msg
+backButton =
+    Html.i
+        [ class "material-icons back-button fade_in", onClick ResetChecklist ]
+        [ text "chevron_left" ]
+
+
+checklistTitle : Checklist -> Html Msg
+checklistTitle checklist =
+    case checklist.editing of
+        Editing str ->
+            Html.form [ class "checklist-header__form", onSubmit SetChecklist ]
+                [ input
+                    [ type_ "text"
+                    , id "title-input"
+                    , onInput UpdateChecklist
+                    , onBlur SetChecklist
+                    , class "checklist-header__input"
+                    , value str
+                    ]
+                    []
+                ]
+
+        Set ->
+            h1 [ class "checklist-header__title" ] [ text checklist.title ]
+
+
+checklistEditButton : Checklist -> Html Msg
+checklistEditButton checklist =
+    case checklist.editing of
+        Editing str ->
+            div [] []
+
+        Set ->
+            Html.i
+                [ class "material-icons checklist-header__button fade_in"
+                , onClick EditChecklist
+                ]
+                [ text "edit" ]
+
+
+checklistDeleteButton : Html Msg
+checklistDeleteButton =
+    Html.i
+        [ class "material-icons back-button fade_in"
+        , onMouseDown DeleteChecklist
+        ]
+        [ text "delete_forever" ]
+
+
+createCheckbox : String -> Html Msg
+createCheckbox create =
+    let
+        submit =
+            if create == "" then
+                Focus "create-checkbox"
+            else
+                CreateCheckbox
+    in
+    Html.form [ onSubmit submit, class "create-checkbox" ]
+        (createCheckboxInput create ++ [ submitButton submit ])
+
+
+createCheckboxInput : String -> List (Html Msg)
+createCheckboxInput create =
+    [ label [ for "create-checkbox", class "visually-hidden" ]
+        [ text "Add a checkbox" ]
+    , input
+        [ type_ "text"
+        , onInput UpdateCreateCheckbox
+        , id "create-checkbox"
+        , class "create-checkbox__input"
+        , value create
+        , autocomplete False
+        ]
+        []
+    ]
+
+
+submitButton : Msg -> Html Msg
+submitButton submit =
+    Html.i
+        [ onClick submit
+        , class "material-icons button--rounded button--left-pad"
+        ]
+        [ text "add" ]

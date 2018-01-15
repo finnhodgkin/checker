@@ -9,27 +9,17 @@ import NoteTypes exposing (..)
 import Types exposing (..)
 
 
-notes : Model -> Html Msg
-notes model =
-    case model.currentNote of
-        Just id ->
-            note id model
-
-        Nothing ->
-            showNoteList model
-
-
-note : Int -> Model -> Html Msg
-note id model =
+noteView : Int -> Model -> Html Msg
+noteView id model =
     let
         ( noteText, noteTitle ) =
             findById id model.notes
                 |> Maybe.map (\note -> ( note.note, note.title ))
-                |> Maybe.withDefault ( "", "" )
+                |> Maybe.withDefault ( "", "Untitled" )
     in
     div [ class "notes" ]
         [ div [ class "notes__title" ]
-            [ i [ onClick (Notes <| ClearNote), class "material-icons" ] [ text "chevron_left" ]
+            [ i [ onClick SetNotesView, class "material-icons" ] [ text "chevron_left" ]
             , text noteTitle
             ]
         , textarea [ class "notes__text", on "input" noteInputDecoder ]
@@ -53,7 +43,8 @@ notesTitle model =
             case model.createNote of
                 Editing string ->
                     [ Html.form [ class "notes-list__form", onSubmit (Notes <| CreateNote) ]
-                        [ input
+                        [ backButton
+                        , input
                             [ class "notes-list__input"
                             , onInput (Notes << UpdateCreateNote)
                             , HA.value string
@@ -65,7 +56,8 @@ notesTitle model =
                     ]
 
                 Set ->
-                    [ h2 [ class "notes-title" ] [ text "Notes" ]
+                    [ backButton
+                    , h2 [ class "notes-title" ] [ text "Notes" ]
                     , i
                         [ class "material-icons notes-title__add"
                         , onClick (Notes <| SetNoteEdit)
@@ -76,9 +68,17 @@ notesTitle model =
     section [ class "notes-title-wrap" ] title
 
 
-showNoteList : Model -> Html Msg
-showNoteList model =
-    section [ class "notes-list-wrap" ]
+backButton : Html Msg
+backButton =
+    Html.i
+        [ class "material-icons notes-title__back", onClick SetChecklistView ]
+        [ text "chevron_left" ]
+
+
+notesView : Model -> Html Msg
+notesView model =
+    section
+        [ class "notes-list-wrap fade_in_fast" ]
         [ notesTitle model
         , ul [ class "notes-list" ]
             (List.map

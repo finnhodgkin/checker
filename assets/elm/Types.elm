@@ -10,7 +10,6 @@ type alias Model =
     { checks : List Checkbox
     , error : String
     , create : String
-    , checklist : Checklist
     , auth : Auth
     , checklists : List Checklist
     , createChecklist : String
@@ -19,10 +18,19 @@ type alias Model =
     , failedPosts : List Failure
     , online : Online
     , notes : List Note
-    , currentNote : Maybe Int
     , noteRows : Int
     , createNote : Editing
+    , view : View
+    , checklistAnimation : Animate
     }
+
+
+type View
+    = NotesView
+    | NoteView Int
+    | ChecklistView
+    | CheckboxView Checklist
+    | AuthView
 
 
 type Online
@@ -136,4 +144,7 @@ type Msg
     | BadFailureDecode String
     | GetAllFailures (List Failure)
     | Notes NoteMsg
+    | PreNotesView
+    | SetNotesView
+    | SetChecklistView
     | NoOp

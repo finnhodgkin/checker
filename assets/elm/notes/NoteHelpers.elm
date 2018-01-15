@@ -5,9 +5,9 @@ import NoteTypes exposing (..)
 import Types exposing (..)
 
 
-updateCurrentNote : Int -> Model -> Model
-updateCurrentNote id model =
-    { model | currentNote = Just id }
+updateNoteView : Int -> Model -> Model
+updateNoteView id model =
+    { model | view = NoteView id }
 
 
 updateCreateNote : Model -> Model
@@ -22,7 +22,7 @@ updateCreateNote model =
 
         Editing title ->
             { model
-                | currentNote = Just id
+                | view = NoteView id
                 , notes = model.notes ++ [ Note "" title id ]
                 , createNote = Set
             }
@@ -41,16 +41,21 @@ updateCreateNoteString string model =
     { model | createNote = Editing string }
 
 
-updateClearNote : Model -> Model
-updateClearNote model =
-    { model | currentNote = Nothing }
+updateNotesView : Model -> Model
+updateNotesView model =
+    { model | view = NotesView }
 
 
 updateTitle : String -> Model -> Model
 updateTitle text model =
     let
         currentId =
-            Maybe.withDefault -1 model.currentNote
+            case model.view of
+                NoteView id ->
+                    id
+
+                _ ->
+                    -1
 
         updateNote note =
             if currentId == note.id then
@@ -65,7 +70,12 @@ updateNote : String -> Model -> Model
 updateNote text model =
     let
         currentId =
-            Maybe.withDefault -1 model.currentNote
+            case model.view of
+                NoteView id ->
+                    id
+
+                _ ->
+                    -1
 
         updateNote note =
             if currentId == note.id then

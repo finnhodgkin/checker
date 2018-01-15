@@ -1,17 +1,18 @@
 module ChecklistUpdate exposing (checklistUpdate)
 
 import AuthenticationUpdate exposing (..)
-import Checkbox exposing (focusElement)
-import Checklist exposing (getEditString)
 import CommandHelpers exposing (..)
 import Helpers exposing (..)
 import Requests exposing (..)
-import SaveToStorage exposing (encodeListChecklist, fetchCheckboxesFromLS, setLists)
 import Types exposing (..)
 
 
 checklistUpdate : Msg -> Model -> ( Model, Cmd Msg )
 checklistUpdate msg model =
+    let
+        checklist =
+            currentChecklist model
+    in
     case msg of
         CreateChecklist ->
             let
@@ -57,14 +58,14 @@ checklistUpdate msg model =
 
         EditChecklist ->
             model
-                |> updateList (startListEdit model.checklist)
+                |> updateList (startListEdit checklist)
                 |> cmd
                 |> cmdFocus "title-input"
                 |> cmdSend
 
         UpdateChecklist newTitle ->
             model
-                |> updateList (updateListEditing newTitle model.checklist)
+                |> updateList (updateListEditing newTitle checklist)
                 |> cmd
                 |> cmdSetLists
                 |> cmdSend
@@ -80,6 +81,8 @@ checklistUpdate msg model =
             model
                 |> updateLists (deleteById id model.checklists)
                 |> updateList (Checklist "" 0 Set)
+                |> updateChecklistAnimNone
+                |> updateChecklistView
                 |> cmd
                 |> cmdSetLists
                 |> cmdSend
@@ -94,24 +97,26 @@ checklistUpdate msg model =
                 |> updateList (Checklist "" 0 Set)
                 |> updateChecks []
                 |> updateCheckboxLoaded Empty
+                |> updateChecklistView
+                |> updateChecklistAnimNone
                 |> cmdNone
 
         SetChecklist ->
             let
                 setIfEditing list =
-                    case getEditString model.checklist.editing of
-                        Just str ->
+                    case list.editing of
+                        Editing str ->
                             ( { list | editing = Set, title = str }
-                            , updateChecklist model.auth.token model.checklist
+                            , updateChecklist model.auth.token checklist
                             )
 
-                        Nothing ->
+                        Set ->
                             ( list
                             , Cmd.none
                             )
 
                 ( list, update ) =
-                    setIfEditing model.checklist
+                    setIfEditing checklist
             in
             (model
                 |> updateList list
@@ -141,6 +146,11 @@ checklistUpdate msg model =
         ShowLists (Err err) ->
             model
                 |> updateError (toString err)
+                |> cmdNone
+
+        PreNotesView ->
+            model
+                |> updateChecklistAnimDelete
                 |> cmdNone
 
         _ ->

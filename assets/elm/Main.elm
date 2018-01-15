@@ -8,10 +8,10 @@ import Html exposing (Html)
 import Json.Encode exposing (Value)
 import NoteTypes exposing (..)
 import Offline exposing (decodeOnlineOffline)
-import Page exposing (content)
 import Requests exposing (..)
 import SaveToStorage exposing (..)
 import Types exposing (..)
+import View exposing (content)
 
 
 main : Program (Maybe String) Model Msg
@@ -40,11 +40,18 @@ subscriptions model =
 init : Maybe String -> ( Model, Cmd Msg )
 init authToken =
     let
+        view token =
+            case token of
+                "" ->
+                    AuthView
+
+                _ ->
+                    ChecklistView
+
         model token =
             Model []
                 ""
                 ""
-                (Checklist "" 0 Set)
                 (Auth token)
                 []
                 ""
@@ -54,9 +61,10 @@ init authToken =
                 Online
                 [ Note "test" "test title" 1
                 ]
-                Nothing
                 0
                 Set
+                (view token)
+                NoAnimation
     in
     case authToken of
         Just token ->
@@ -109,6 +117,17 @@ update msg model =
         GetAllFailures failures ->
             model
                 |> updateFailedPosts failures
+                |> cmdNone
+
+        SetNotesView ->
+            model
+                |> updateNotesView
+                |> updateChecklistAnimCreate
+                |> cmdNone
+
+        SetChecklistView ->
+            model
+                |> updateChecklistView
                 |> cmdNone
 
         _ ->

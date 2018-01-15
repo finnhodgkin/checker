@@ -190,6 +190,83 @@ body,
   animation-timing-function: ease-out;
 }
 
+.fade_in_fast {
+  animation-name: fade-in;
+  animation-duration: 0.1s;
+  animation-timing-function: ease-out;
+}
+
+.fade_out {
+  animation-name: fade-out;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.swipe_up {
+  animation-name: swipe-up;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.swipe_from_up {
+  animation-name: swipe-from-up;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.swipe_down {
+  animation-name: swipe-down;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.swipe_from_down {
+  animation-name: swipe-from-down;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes swipe-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes swipe-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes swipe-from-down {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes swipe-from-up {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 @keyframes switch {
   0% {
     transform: scale(1);
@@ -214,6 +291,15 @@ body,
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -407,6 +493,16 @@ body,
   padding-top: 0.3rem;
   padding-bottom: 0.5rem;
   color: palevioletred;
+  flex-grow: 1;
+}
+
+.notes-title__back {
+  padding: 0.3rem 0.3rem 0.5rem 0rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.5rem;
+  color: palevioletred;
+  font-size: 2.2rem;
+  margin-left: -0.6rem;
 }
 
 .notes-list {
@@ -456,6 +552,8 @@ body,
 .notes-title__add {
   font-size: 1.6rem;
   color: palevioletred;
+  padding-top: 0.3rem;
+  padding-bottom: 0.5rem;
 }
 
 .notes-title__submit {
